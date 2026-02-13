@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Outer circle -->
+  <circle cx="100" cy="100" r="95" fill="none" stroke="#1a5f2a" stroke-width="6"/>
+  <circle cx="100" cy="100" r="88" fill="none" stroke="#fff" stroke-width="3"/>
+  
+  <!-- Sun background -->
+  <circle cx="100" cy="70" r="35" fill="#fbbf24"/>
+  
+  <!-- Sun rays -->
+  <g fill="#fbbf24">
+    <polygon points="100,40 95,52 105,52"/>
+    <polygon points="125,50 118,58 128,60"/>
+    <polygon points="135,70 127,75 135,80"/>
+    <polygon points="125,90 118,82 128,80"/>
+    <polygon points="75,50 82,58 72,60"/>
+    <polygon points="65,70 73,75 65,80"/>
+    <polygon points="75,90 82,82 72,80"/>
+  </g>
+  
+  <!-- Fields/land -->
+  <ellipse cx="100" cy="140" rx="70" ry="50" fill="#84cc16"/>
+  <ellipse cx="100" cy="135" rx="65" ry="45" fill="#65a30d"/>
+  <ellipse cx="100" cy="130" rx="60" ry="40" fill="#4d7c0f"/>
+  
+  <!-- Field lines -->
+  <path d="M 50 130 Q 70 135, 85 130" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/>
+  <path d="M 60 140 Q 80 145, 95 140" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/>
+  <path d="M 105 140 Q 120 145, 140 140" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/>
+  <path d="M 115 130 Q 130 135, 150 130" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/>
+  
+  <!-- Plant leaves -->
+  <g transform="translate(100, 85)">
+    <!-- Center leaf -->
+    <ellipse cx="0" cy="-10" rx="8" ry="18" fill="#15803d" stroke="#fff" stroke-width="1.5"/>
+    <path d="M 0,-28 Q 0,-15 0,-2" stroke="#86efac" stroke-width="1" fill="none"/>
+    
+    <!-- Left leaf -->
+    <ellipse cx="-12" cy="-5" rx="8" ry="16" fill="#166534" stroke="#fff" stroke-width="1.5" transform="rotate(-30 -12 -5)"/>
+    <path d="M -12,-21 Q -8,-12 -4,-3" stroke="#86efac" stroke-width="1" fill="none"/>
+    
+    <!-- Right leaf -->
+    <ellipse cx="12" cy="-5" rx="8" ry="16" fill="#166534" stroke="#fff" stroke-width="1.5" transform="rotate(30 12 -5)"/>
+    <path d="M 12,-21 Q 8,-12 4,-3" stroke="#86efac" stroke-width="1" fill="none"/>
+  </g>
+</svg>

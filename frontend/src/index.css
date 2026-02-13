@@ -1,0 +1,57 @@
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #f4fff4;
+}
+
+.landing {
+  text-align: center;
+  margin-top: 120px;
+}
+
+.btn-group button {
+  margin: 10px;
+  padding: 10px 20px;
+}
+
+.auth-card {
+  width: 300px;
+  margin: 100px auto;
+  padding: 20px;
+  background: white;
+  box-shadow: 0 0 10px #ccc;
+}
+
+.auth-card input,
+.auth-card select,
+.auth-card button {
+  width: 100%;
+  margin: 8px 0;
+  padding: 8px;
+}
+
+.dashboard {
+  display: flex;
+}
+
+aside {
+  width: 200px;
+  background: #e7f6e7;
+  padding: 15px;
+}
+
+aside a {
+  display: block;
+  margin: 10px 0;
+}
+
+main {
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  margin: 10px;
+  box-shadow: 0 0 6px #ccc;
+}
