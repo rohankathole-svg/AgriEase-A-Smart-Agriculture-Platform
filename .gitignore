@@ -1,0 +1,2 @@
+# Ignore large model weights that exceed GitHub limits
+ai-backend/Flask Deployed App/plant_disease_model_1_latest.pt
