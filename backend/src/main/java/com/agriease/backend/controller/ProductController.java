@@ -1,6 +1,7 @@
 package com.agriease.backend.controller;
 
 import com.agriease.backend.dto.ProductRequest;
+import com.agriease.backend.dto.ProductMarketplaceDto;
 import com.agriease.backend.entity.Product;
 import com.agriease.backend.service.ProductService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,8 +32,8 @@ public class ProductController {
 
     // Public view all products
     @GetMapping("/products")
-    public List<Product> getAllProducts() {
-        return productService.getAllProducts();
+    public List<ProductMarketplaceDto> getAllProducts() {
+        return productService.getMarketplaceProducts();
     }
 
     // Supplier view own products

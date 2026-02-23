@@ -29,10 +29,12 @@ export default function SupplierOrders() {
   };
 
   const updateOrderStatus = async (orderId, status, order) => {
+    const displayOrderNumber = order?.displayOrderNumber ?? order?.orderNumber ?? orderId;
+
     // Confirmation dialogs
     if (status === "CONFIRMED") {
       const confirmMessage = `Confirm this order?\n\n` +
-        `Order #${orderId}\n` +
+        `Order #${displayOrderNumber}\n` +
         `Customer: ${order.shippingAddress?.fullName}\n` +
         `Items: ${order.items?.length} item(s)\n` +
         `Total Amount: INR ${order.totalAmount}\n` +
@@ -44,7 +46,7 @@ export default function SupplierOrders() {
       }
     } else if (status === "CANCELLED") {
       const cancelMessage = `Cancel this order?\n\n` +
-        `Order #${orderId}\n` +
+        `Order #${displayOrderNumber}\n` +
         `Customer: ${order.shippingAddress?.fullName}\n` +
         `Total Amount: INR ${order.totalAmount}\n\n` +
         `This action cannot be undone. The customer will be notified.`;
@@ -54,7 +56,7 @@ export default function SupplierOrders() {
       }
     } else if (status === "DELIVERED") {
       const deliverMessage = `Mark order as delivered?\n\n` +
-        `Order #${orderId}\n` +
+        `Order #${displayOrderNumber}\n` +
         `Customer: ${order.shippingAddress?.fullName}\n` +
         `Total Amount: INR ${order.totalAmount}\n\n` +
         `Confirm that this order has been delivered to the customer.`;
@@ -74,8 +76,9 @@ export default function SupplierOrders() {
   };
 
   const removeOrder = async (orderId, order) => {
+    const displayOrderNumber = order?.displayOrderNumber ?? order?.orderNumber ?? orderId;
     const removeMessage = `Remove this order from history?\n\n` +
-      `Order #${orderId}\n` +
+      `Order #${displayOrderNumber}\n` +
       `Customer: ${order.shippingAddress?.fullName}\n` +
       `Status: ${order.status}\n` +
       `Total Amount: INR ${order.totalAmount}\n\n` +
@@ -376,7 +379,7 @@ export default function SupplierOrders() {
           <div key={order.id} className="product-card" style={{ marginBottom: "16px" }}>
             <div>
               <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "12px" }}>
-                <h4>Order #{order.id}</h4>
+                <h4>Order #{order.displayOrderNumber ?? order.orderNumber ?? order.id}</h4>
                 <span
                   className="cart-item-type"
                   style={{

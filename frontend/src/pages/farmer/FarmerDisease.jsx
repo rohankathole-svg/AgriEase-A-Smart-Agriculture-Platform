@@ -2,6 +2,7 @@ import { useState } from "react";
 import Button from "../../components/ui/Button";
 import { toast } from "react-toastify";
 import { predictDisease } from "../../services/diseaseService";
+import { useLanguage } from "../../context/LanguageContext";
 
 function FarmerDisease() {
   const [file, setFile] = useState(null);
@@ -9,6 +10,7 @@ function FarmerDisease() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { t } = useLanguage();
 
   const handleImageChange = (e) => {
     const img = e.target.files[0];
@@ -20,7 +22,7 @@ function FarmerDisease() {
 
   const handlePredict = async () => {
     if (!file) {
-      toast.error("Please upload leaf image");
+      toast.error(t("messages.selectImage"));
       return;
     }
 
@@ -30,7 +32,7 @@ function FarmerDisease() {
       setResult(res);
     } catch (err) {
       console.error(err);
-      setError("Prediction failed. Backend not responding.");
+      setError(t("messages.predictionFailed"));
     } finally {
       setLoading(false);
     }
@@ -38,12 +40,12 @@ function FarmerDisease() {
 
   return (
     <div>
-      <h2 className="dash-title">Plant Disease Detection</h2>
-      <p className="dash-subtitle">Upload a leaf image to detect disease.</p>
+      <h2 className="dash-title">{t("farmer.disease.title")}</h2>
+      <p className="dash-subtitle">{t("farmer.disease.subtitle")}</p>
 
       <div className="disease-card">
         <label className="file-label">
-          Upload leaf image
+          {t("farmer.disease.uploadLabel")}
           <input type="file" onChange={handleImageChange} className="file-input" />
         </label>
 
@@ -52,7 +54,7 @@ function FarmerDisease() {
         )}
 
         <Button onClick={handlePredict} loading={loading} className="btn primary">
-          Detect Disease
+          {t("common.actions.detectDisease")}
         </Button>
 
         {error && <p className="dash-subtitle">{error}</p>}
@@ -61,16 +63,16 @@ function FarmerDisease() {
           <div className="info-list">
             <h3>{result.disease}</h3>
             <p>
-              <strong>Description:</strong> {result.description}
+              <strong>{t("farmer.disease.description")}:</strong> {result.description}
             </p>
             <p>
-              <strong>Prevention:</strong> {result.prevention}
+              <strong>{t("farmer.disease.prevention")}:</strong> {result.prevention}
             </p>
             <p>
-              <strong>Confidence:</strong> {result.confidence}%
+              <strong>{t("farmer.disease.confidence")}:</strong> {result.confidence}%
             </p>
             <a href={result.buy_link} target="_blank" rel="noreferrer">
-              Buy Recommended Supplement
+              {t("farmer.disease.buyLink")}
             </a>
           </div>
         )}

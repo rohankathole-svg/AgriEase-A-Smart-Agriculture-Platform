@@ -3,9 +3,12 @@ import { useAuth } from "../../auth/AuthContext";
 import Button from "../../components/ui/Button";
 import api from "../../api/axios";
 import { toast } from "react-toastify";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function Profile() {
   const { user, login } = useAuth();
+  const { t, language } = useLanguage();
+  const locale = language === "mr" ? "mr-IN" : "en-IN";
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -58,11 +61,11 @@ export default function Profile() {
       };
       login(updatedUser);
 
-      toast.success("Profile updated successfully!");
+      toast.success(t("messages.profileUpdated"));
       setIsEditing(false);
     } catch (error) {
       console.error("Update error:", error);
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      toast.error(error.response?.data?.message || t("messages.profileUpdateError"));
     }
   };
 
@@ -70,12 +73,12 @@ export default function Profile() {
     e.preventDefault();
 
     if (formData.newPassword !== formData.confirmPassword) {
-      toast.error("New passwords do not match");
+      toast.error(t("messages.passwordMismatch"));
       return;
     }
 
     if (formData.newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error(t("messages.passwordLength"));
       return;
     }
 
@@ -85,7 +88,7 @@ export default function Profile() {
         newPassword: formData.newPassword,
       });
 
-      toast.success("Password changed successfully!");
+      toast.success(t("messages.passwordChanged"));
       setFormData({
         ...formData,
         currentPassword: "",
@@ -94,14 +97,14 @@ export default function Profile() {
       });
     } catch (error) {
       console.error("Password change error:", error);
-      toast.error(error.response?.data?.message || "Failed to change password");
+      toast.error(error.response?.data?.message || t("messages.profileUpdateError"));
     }
   };
 
   return (
     <div>
-      <h2 className="dash-title">My Profile</h2>
-      <p className="dash-subtitle">Manage your account information</p>
+      <h2 className="dash-title">{t("farmer.account.title")}</h2>
+      <p className="dash-subtitle">{t("farmer.account.subtitle")}</p>
 
       <div className="profile-container">
         {/* Profile Information Card */}
@@ -112,13 +115,13 @@ export default function Profile() {
             </div>
             <div>
               <h3>{user?.name || "Farmer"}</h3>
-              <span className="profile-role">Farmer</span>
+              <span className="profile-role">{t("farmer.profile.role")}</span>
             </div>
           </div>
 
           <form onSubmit={handleUpdateProfile} className="profile-form">
             <div className="form-group">
-              <label>Full Name</label>
+              <label>{t("common.labels.fullName")}</label>
               <input
                 type="text"
                 name="name"
@@ -131,7 +134,7 @@ export default function Profile() {
             </div>
 
             <div className="form-group">
-              <label>Email Address</label>
+              <label>{t("common.labels.email")}</label>
               <input
                 type="email"
                 name="email"
@@ -144,7 +147,7 @@ export default function Profile() {
             </div>
 
             <div className="form-group">
-              <label>Phone Number</label>
+              <label>{t("common.labels.phoneNumber")}</label>
               <input
                 type="tel"
                 name="phone"
@@ -157,7 +160,7 @@ export default function Profile() {
             </div>
 
             <div className="form-group">
-              <label>Address</label>
+              <label>{t("common.labels.address")}</label>
               <textarea
                 name="address"
                 value={formData.address}
@@ -176,12 +179,12 @@ export default function Profile() {
                   className="btn primary square"
                   onClick={() => setIsEditing(true)}
                 >
-                  Edit Profile
+                  {t("common.actions.editProfile")}
                 </Button>
               ) : (
                 <>
                   <Button type="submit" className="btn primary square">
-                    Save Changes
+                    {t("common.actions.saveChanges")}
                   </Button>
                   <Button
                     type="button"
@@ -198,7 +201,7 @@ export default function Profile() {
                       });
                     }}
                   >
-                    Cancel
+                    {t("common.actions.cancel")}
                   </Button>
                 </>
               )}
@@ -208,10 +211,10 @@ export default function Profile() {
 
         {/* Change Password Card */}
         <div className="profile-card">
-          <h3>Change Password</h3>
+          <h3>{t("common.labels.changePassword")}</h3>
           <form onSubmit={handleChangePassword} className="profile-form">
             <div className="form-group">
-              <label>Current Password</label>
+              <label>{t("common.labels.currentPassword")}</label>
               <input
                 type="password"
                 name="currentPassword"
@@ -224,7 +227,7 @@ export default function Profile() {
             </div>
 
             <div className="form-group">
-              <label>New Password</label>
+              <label>{t("common.labels.newPassword")}</label>
               <input
                 type="password"
                 name="newPassword"
@@ -238,7 +241,7 @@ export default function Profile() {
             </div>
 
             <div className="form-group">
-              <label>Confirm New Password</label>
+              <label>{t("common.labels.confirmPassword")}</label>
               <input
                 type="password"
                 name="confirmPassword"
@@ -252,27 +255,27 @@ export default function Profile() {
             </div>
 
             <Button type="submit" className="btn primary square">
-              Update Password
+              {t("common.actions.saveChanges")}
             </Button>
           </form>
         </div>
 
         {/* Account Info Card */}
         <div className="profile-card">
-          <h3>Account Information</h3>
+          <h3>{t("common.labels.accountInformation")}</h3>
           <div className="info-list">
             <div className="info-item">
-              <span className="info-label">Account Type:</span>
-              <span className="info-value">Farmer</span>
+              <span className="info-label">{t("common.labels.accountType")}:</span>
+              <span className="info-value">{t("farmer.profile.role")}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">Member Since:</span>
+              <span className="info-label">{t("common.labels.memberSince")}:</span>
               <span className="info-value">
-                {new Date(user?.createdAt || Date.now()).toLocaleDateString()}
+                {new Date(user?.createdAt || Date.now()).toLocaleDateString(locale)}
               </span>
             </div>
             <div className="info-item">
-              <span className="info-label">User ID:</span>
+              <span className="info-label">{t("common.labels.userId")}:</span>
               <span className="info-value">#{user?.id || "N/A"}</span>
             </div>
           </div>

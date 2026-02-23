@@ -83,9 +83,10 @@ public class SupplierController {
 
     @PutMapping("/orders/{id}/status")
     public void updateOrderStatus(@PathVariable Long id,
-                                   @RequestBody Map<String, String> request) {
+                                   @RequestBody Map<String, String> request,
+                                   Authentication authentication) {
         String status = request.get("status");
-        orderService.updateOrderStatus(id, status);
+        orderService.updateOrderStatus(id, status, authentication.getName());
     }
 
     @DeleteMapping("/orders/{id}")

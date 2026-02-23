@@ -1,5 +1,6 @@
 package com.agriease.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -7,6 +8,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "orders")
+@JsonIgnoreProperties({"farmer"})
 public class Order {
 
     @Id
@@ -14,7 +16,11 @@ public class Order {
     private Long id;
 
     @ManyToOne(optional = false)
-    private User user; // Farmer who placed the order
+    @JoinColumn(name = "user_id")
+    private User farmer;
+
+    @Column(name = "display_order_number")
+    private Integer displayOrderNumber;
 
     @Embedded
     private ShippingAddress shippingAddress;
@@ -42,12 +48,20 @@ public class Order {
         this.id = id;
     }
 
-    public User getUser() {
-        return user;
+    public User getFarmer() {
+        return farmer;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setFarmer(User farmer) {
+        this.farmer = farmer;
+    }
+
+    public Integer getDisplayOrderNumber() {
+        return displayOrderNumber;
+    }
+
+    public void setDisplayOrderNumber(Integer displayOrderNumber) {
+        this.displayOrderNumber = displayOrderNumber;
     }
 
     public ShippingAddress getShippingAddress() {

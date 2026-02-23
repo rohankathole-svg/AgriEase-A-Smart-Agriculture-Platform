@@ -9,9 +9,13 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    List<Order> findByUserOrderByCreatedAtDesc(User user);
+    @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items WHERE o.farmer = :farmer ORDER BY o.createdAt DESC")
+    List<Order> findByFarmerWithItemsOrderByCreatedAtDesc(@Param("farmer") User farmer);
 
-    @Query("SELECT DISTINCT o FROM Order o JOIN o.items oi WHERE oi.supplier = :supplier ORDER BY o.createdAt DESC")
-    List<Order> findOrdersBySupplier(@Param("supplier") User supplier);
+    @Query("SELECT DISTINCT o FROM Order o JOIN o.items oi LEFT JOIN FETCH o.items WHERE oi.supplier = :supplier ORDER BY o.createdAt DESC")
+    List<Order> findBySupplierWithItemsOrderByCreatedAtDesc(@Param("supplier") User supplier);
+
+    List<Order> findByFarmerOrderByCreatedAtAsc(User farmer);
+
+    long countByFarmer(User farmer);
 }
-

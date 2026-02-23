@@ -3,9 +3,11 @@ import { useAuth } from "../../auth/AuthContext";
 import Button from "../../components/ui/Button";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function FarmerProfile() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
+  const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -26,6 +28,7 @@ export default function FarmerProfile() {
   });
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -86,7 +89,7 @@ export default function FarmerProfile() {
       });
     } catch (error) {
       console.error("Failed to load account stats", error);
-      setStatsError("Unable to sync stats right now. Showing last known values.");
+      setStatsError(t("farmer.profile.statsError"));
     } finally {
       setStatsLoading(false);
     }
@@ -126,13 +129,13 @@ export default function FarmerProfile() {
     if (file) {
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image size should be less than 2MB");
+        toast.error(t("messages.imageTooLarge"));
         return;
       }
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        toast.error("Please select an image file");
+        toast.error(t("messages.imageType"));
         return;
       }
 
@@ -148,7 +151,7 @@ export default function FarmerProfile() {
         setUploadingPhoto(false);
       };
       reader.onerror = () => {
-        toast.error("Failed to read image file");
+        toast.error(t("messages.imageReadError"));
         setUploadingPhoto(false);
       };
       reader.readAsDataURL(file);
@@ -186,19 +189,46 @@ export default function FarmerProfile() {
         await loadProfile();
       }
       
-      toast.success("Profile updated successfully!");
+      toast.success(t("messages.profileUpdated"));
       setIsEditing(false);
       loadAccountStats();
     } catch (error) {
       console.error("Profile update error:", error);
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      toast.error(error.response?.data?.message || t("messages.profileUpdateError"));
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      "Delete your account permanently? This will remove your profile and related data. This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingAccount(true);
+      try {
+        await api.delete("/api/user/account");
+      } catch (error) {
+        if (error?.response?.status === 404) {
+          await api.delete("/user/account");
+        } else {
+          throw error;
+        }
+      }
+      toast.success("Account deleted successfully");
+      logout();
+    } catch (error) {
+      console.error("Delete account error:", error);
+      toast.error(error?.response?.data?.message || "Failed to delete account");
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
   return (
     <div>
-      <h2 className="dash-title">My Profile</h2>
-      <p className="dash-subtitle">Manage your account information</p>
+      <h2 className="dash-title">{t("farmer.profile.title")}</h2>
+      <p className="dash-subtitle">{t("farmer.profile.subtitle")}</p>
 
       <div className="profile-container">
         <div className="profile-card">
@@ -239,7 +269,7 @@ export default function FarmerProfile() {
                         borderRadius: '4px'
                       }}
                     >
-                      {uploadingPhoto ? "Uploading..." : "📷 Change Photo"}
+                      {uploadingPhoto ? t("messages.uploadingImage") : `📷 ${t("farmer.profile.changePhoto")}`}
                     </span>
                   </label>
                   {photoPreview && (
@@ -256,27 +286,27 @@ export default function FarmerProfile() {
                         borderRadius: '4px'
                       }}
                     >
-                      ✕ Remove
+                      ✕ {t("farmer.profile.removePhoto")}
                     </button>
                   )}
                 </div>
               )}
               {!isEditing && (
                 <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-                  Click "Edit Profile" to change photo
+                  {t("farmer.profile.avatarHint")}
                 </div>
               )}
             </div>
             <div>
               <h3>{formData.name || user?.name || "Farmer"}</h3>
-              <span className="profile-role">Farmer</span>
+              <span className="profile-role">{t("farmer.profile.role")}</span>
               {formData.phone && <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>📞 {formData.phone}</p>}
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="profile-form">
             <div className="form-group">
-              <label>Full Name</label>
+              <label>{t("common.labels.fullName")}</label>
               <input
                 type="text"
                 name="name"
@@ -289,7 +319,7 @@ export default function FarmerProfile() {
             </div>
 
             <div className="form-group">
-              <label>Email</label>
+              <label>{t("common.labels.email")}</label>
               <input
                 type="email"
                 name="email"
@@ -302,7 +332,7 @@ export default function FarmerProfile() {
             </div>
 
             <div className="form-group">
-              <label>Phone Number</label>
+              <label>{t("common.labels.phoneNumber")}</label>
               <input
                 type="tel"
                 name="phone"
@@ -310,12 +340,12 @@ export default function FarmerProfile() {
                 onChange={handleChange}
                 disabled={!isEditing}
                 className="input"
-                placeholder="Enter phone number"
+                placeholder={t("farmer.profile.placeholders.phone")}
               />
             </div>
 
             <div className="form-group">
-              <label>Address</label>
+              <label>{t("common.labels.address")}</label>
               <textarea
                 name="address"
                 value={formData.address}
@@ -323,12 +353,12 @@ export default function FarmerProfile() {
                 disabled={!isEditing}
                 className="input"
                 rows="3"
-                placeholder="Enter your address"
+                placeholder={t("farmer.profile.placeholders.address")}
               />
             </div>
 
             <div className="form-group">
-              <label>Farm Size (in acres)</label>
+              <label>{t("farmer.profile.form.farmSizeLabel")}</label>
               <input
                 type="text"
                 name="farmSize"
@@ -336,12 +366,12 @@ export default function FarmerProfile() {
                 onChange={handleChange}
                 disabled={!isEditing}
                 className="input"
-                placeholder="e.g., 5 acres"
+                placeholder={t("farmer.profile.placeholders.farmSize")}
               />
             </div>
 
             <div className="form-group">
-              <label>Crop Types</label>
+              <label>{t("farmer.profile.form.cropTypesLabel")}</label>
               <input
                 type="text"
                 name="cropTypes"
@@ -349,28 +379,39 @@ export default function FarmerProfile() {
                 onChange={handleChange}
                 disabled={!isEditing}
                 className="input"
-                placeholder="e.g., Rice, Wheat, Vegetables"
+                placeholder={t("farmer.profile.placeholders.cropTypes")}
               />
             </div>
 
             <div className="profile-actions">
               {!isEditing ? (
-                <Button
-                  type="button"
-                  className="btn primary square"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log("Edit Profile button clicked, entering edit mode");
-                    setIsEditing(true);
-                  }}
-                >
-                  Edit Profile
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    className="btn primary square"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("Edit Profile button clicked, entering edit mode");
+                      setIsEditing(true);
+                    }}
+                  >
+                    {t("common.actions.editProfile")}
+                  </Button>
+                  <Button
+                    type="button"
+                    className="btn secondary square"
+                    onClick={handleDeleteAccount}
+                    loading={deletingAccount}
+                    style={{ background: "#fee", color: "#b42318", border: "1px solid #fdd" }}
+                  >
+                    Delete Account
+                  </Button>
+                </>
               ) : (
                 <>
                   <Button type="submit" className="btn primary square">
-                    Save Changes
+                    {t("common.actions.saveChanges")}
                   </Button>
                   <Button
                     type="button"
@@ -392,7 +433,7 @@ export default function FarmerProfile() {
                       setPhotoPreview(user.profilePhoto || null);
                     }}
                   >
-                    Cancel
+                    {t("common.actions.cancel")}
                   </Button>
                 </>
               )}
@@ -402,38 +443,38 @@ export default function FarmerProfile() {
 
         <div className="profile-stats">
           <div className="profile-stats-header">
-            <h3>Account Statistics</h3>
+            <h3>{t("farmer.profile.accountStatsTitle")}</h3>
             <Button
               type="button"
               className="btn ghost"
               onClick={loadAccountStats}
               loading={statsLoading}
             >
-              Refresh
+              {t("farmer.home.refresh")}
             </Button>
           </div>
           {statsError && <p className="inline-error">{statsError}</p>}
           <div className="stat-card">
             <div className="stat-icon">🛒</div>
             <div>
-              <h4>Total Orders</h4>
+              <h4>{t("farmer.profile.stats.totalOrders")}</h4>
               <p className="stat-value">{statsLoading ? "--" : accountStats.totalOrders}</p>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon">🚜</div>
             <div>
-              <h4>Equipment Bookings</h4>
+              <h4>{t("farmer.profile.stats.equipmentBookings")}</h4>
               <p className="stat-value">{statsLoading ? "--" : accountStats.equipmentBookings}</p>
               <p className="stat-helper">
-                Active now: {statsLoading ? "--" : accountStats.activeBookings}
+                {t("farmer.profile.stats.activeNow")}: {statsLoading ? "--" : accountStats.activeBookings}
               </p>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon">🌱</div>
             <div>
-              <h4>Disease Scans</h4>
+              <h4>{t("farmer.profile.stats.diseaseScans")}</h4>
               <p className="stat-value">{statsLoading ? "--" : accountStats.diseaseScans}</p>
             </div>
           </div>

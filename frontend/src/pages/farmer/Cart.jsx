@@ -2,6 +2,7 @@ import { useCart } from "../../context/CartContext";
 import Button from "../../components/ui/Button";
 import { useNavigate } from "react-router-dom";
 import { getSafeImageUrl, onImageError } from "../../utils/imageUtils";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function Cart() {
   const {
@@ -14,6 +15,7 @@ export default function Cart() {
   } = useCart();
 
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
@@ -25,14 +27,14 @@ export default function Cart() {
   if (cartItems.length === 0) {
     return (
       <div>
-        <h2 className="dash-title">Shopping Cart</h2>
-        <p className="dash-subtitle">Your cart is empty</p>
+        <h2 className="dash-title">{t("common.labels.shoppingCart")}</h2>
+        <p className="dash-subtitle">{t("common.labels.cartEmpty")}</p>
         <div style={{ marginTop: "2rem" }}>
           <Button
             className="btn primary square"
             onClick={() => navigate("/farmer/market")}
           >
-            Browse Market
+            {t("common.actions.browseMarket")}
           </Button>
         </div>
       </div>
@@ -41,10 +43,8 @@ export default function Cart() {
 
   return (
     <div>
-      <h2 className="dash-title">Shopping Cart</h2>
-      <p className="dash-subtitle">
-        Review and manage your items before checkout
-      </p>
+      <h2 className="dash-title">{t("common.labels.shoppingCart")}</h2>
+      <p className="dash-subtitle">{t("common.labels.cartSubtitle")}</p>
 
       <div className="cart-container">
         <div className="cart-items-section">
@@ -65,22 +65,22 @@ export default function Cart() {
                 <h4>{item.name}</h4>
                 <span className="cart-item-type">
                   {item.type === "product"
-                    ? "Product"
+                    ? t("common.labels.product")
                     : item.type === "crop"
-                    ? "Crop"
-                    : "Equipment Rental"}
+                    ? t("common.labels.crop")
+                    : t("common.labels.equipmentRental")}
                 </span>
 
                 {item.type === "tool" ? (
                   <div className="cart-tool-info">
                     <p>
-                      <strong>Rate:</strong> INR {item.dailyRate} / day
+                      <strong>{t("common.labels.rate")}:</strong> INR {item.dailyRate} / day
                     </p>
                     <p>
-                      <strong>Duration:</strong> {item.days} days
+                      <strong>{t("common.labels.duration")}:</strong> {item.days} days
                     </p>
                     <p>
-                      <strong>Dates:</strong> {item.startDate} to {item.endDate}
+                      <strong>{t("common.labels.dates")}:</strong> {item.startDate} to {item.endDate}
                     </p>
                   </div>
                 ) : (
@@ -117,7 +117,7 @@ export default function Cart() {
                   onClick={() => removeItem(item.id, item.type)}
                   className="remove-btn"
                 >
-                  Remove
+                  {t("common.actions.remove")}
                 </button>
               </div>
             </div>
@@ -125,9 +125,9 @@ export default function Cart() {
         </div>
 
         <div className="cart-summary">
-          <h3>Order Summary</h3>
+          <h3>{t("common.labels.orderSummary")}</h3>
           <div className="summary-line">
-            <span>Total Items:</span>
+            <span>{t("common.labels.totalItems")}:</span>
             <span>{cartItems.length}</span>
           </div>
 
@@ -152,7 +152,7 @@ export default function Cart() {
 
           <div className="summary-total">
             <span>
-              <strong>Total:</strong>
+              <strong>{t("common.labels.total")}:</strong>
             </span>
             <span>
               <strong>INR {getCartTotal().toFixed(2)}</strong>
@@ -165,14 +165,14 @@ export default function Cart() {
               onClick={handleCheckout}
               style={{ width: "100%", marginBottom: "1rem" }}
             >
-              Checkout
+              {t("common.actions.checkout")}
             </Button>
             <Button
               className="btn secondary square"
               onClick={clearCart}
               style={{ width: "100%" }}
             >
-              Clear Cart
+              {t("common.actions.clearCart")}
             </Button>
           </div>
         </div>

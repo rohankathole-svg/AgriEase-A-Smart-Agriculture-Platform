@@ -5,11 +5,13 @@ import { useAuth } from "../../auth/AuthContext";
 import Button from "../../components/ui/Button";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function Checkout() {
   const navigate = useNavigate();
   const { cartItems, getCartTotal, clearCart } = useCart();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -46,12 +48,16 @@ export default function Checkout() {
   const handlePayment = (orderResponse) => {
     if (formData.paymentMethod === "upi") {
       navigate("/farmer/payment", {
-        state: { orderId: orderResponse.orderId, amount: getCartTotal() },
+        state: {
+          orderId: orderResponse.orderId,
+          orderNumber: orderResponse.displayOrderNumber ?? orderResponse.orderNumber ?? orderResponse.orderId,
+          amount: getCartTotal(),
+        },
       });
       return;
     }
 
-    toast.success("Order placed. Waiting for supplier confirmation.");
+    toast.success(t("farmer.checkout.toastSuccess"));
     clearCart();
     navigate("/farmer/orders");
   };
@@ -60,23 +66,37 @@ export default function Checkout() {
     e.preventDefault();
 
     if (!formData.fullName || !formData.phone || !formData.address) {
-      toast.error("Please fill all required fields");
+      toast.error(t("messages.requiredFields"));
       return;
     }
 
     if (!cartItems.length) {
-      toast.error("Your cart is empty");
+      toast.error(t("messages.cartEmpty"));
       return;
     }
 
-    const paymentMethodName = formData.paymentMethod === "upi" ? "UPI QR Code" : "Cash on Delivery";
+    const hasMissingSupplier = cartItems.some((item) => item.supplierId == null);
+    if (hasMissingSupplier) {
+      toast.error("Some cart items are outdated. Please clear cart and add items again.");
+      return;
+    }
+
+    const supplierIds = [...new Set(cartItems.map((item) => item.supplierId).filter((id) => id != null))];
+    if (supplierIds.length > 1) {
+      toast.error("Your cart has items from multiple suppliers. Please place separate orders.");
+      return;
+    }
+
+    const paymentMethodName = formData.paymentMethod === "upi"
+      ? t("farmer.checkout.upiOption")
+      : t("farmer.checkout.codOption");
     const confirmMessage =
-      `Confirm your order?\n\n` +
-      `Items: ${cartItems.length} item(s)\n` +
-      `Total Amount: INR ${getCartTotal()}\n` +
-      `Payment Method: ${paymentMethodName}\n` +
-      `Delivery to: ${formData.fullName}, ${formData.address}\n\n` +
-      "Click OK to place order";
+      `${t("farmer.checkout.confirmTitle")}\n\n` +
+      `${t("farmer.checkout.confirmItems")}: ${cartItems.length}\n` +
+      `${t("farmer.checkout.confirmTotal")}: INR ${getCartTotal()}\n` +
+      `${t("farmer.checkout.confirmPayment")}: ${paymentMethodName}\n` +
+      `${t("farmer.checkout.confirmDelivery")}: ${formData.fullName}, ${formData.address}\n\n` +
+      t("farmer.checkout.confirmCta");
 
     if (!window.confirm(confirmMessage)) {
       return;
@@ -86,6 +106,7 @@ export default function Checkout() {
     try {
       const orderData = {
         items: cartItems,
+        supplierId: supplierIds[0] ?? null,
         shippingAddress: {
           fullName: formData.fullName,
           phone: formData.phone,
@@ -103,13 +124,13 @@ export default function Checkout() {
       if (formData.paymentMethod !== "cod") {
         handlePayment(data);
       } else {
-        toast.success("Order placed. Waiting for supplier confirmation.");
+        toast.success(t("farmer.checkout.toastSuccess"));
         clearCart();
         navigate("/farmer/orders");
       }
     } catch (error) {
       console.error("Order placement error:", error);
-      const errorMsg = error.response?.data?.error || "Failed to place order";
+      const errorMsg = error.response?.data?.error || t("farmer.checkout.toastError");
       toast.error(errorMsg);
     } finally {
       setLoading(false);
@@ -119,13 +140,13 @@ export default function Checkout() {
   if (!cartItems || !cartItems.length) {
     return (
       <div style={{ textAlign: "center", padding: "40px" }}>
-        <h2>Your cart is empty</h2>
+        <h2>{t("farmer.checkout.emptyTitle")}</h2>
         <Button
           className="btn primary square"
           onClick={() => navigate("/farmer/market")}
           style={{ marginTop: "20px" }}
         >
-          Continue Shopping
+          {t("farmer.checkout.emptyAction")}
         </Button>
       </div>
     );
@@ -133,22 +154,22 @@ export default function Checkout() {
 
   return (
     <div>
-      <h2 className="dash-title">Checkout</h2>
-      <p className="dash-subtitle">Complete your order</p>
+      <h2 className="dash-title">{t("farmer.checkout.title")}</h2>
+      <p className="dash-subtitle">{t("farmer.checkout.subtitle")}</p>
 
       <div className="checkout-alert">
         <p>
-          <strong>Important:</strong> After payment, your order stays <strong>PENDING</strong> until
-          supplier confirmation.
+          <strong>{t("common.labels.important")}: </strong>
+          {t("farmer.checkout.alertText")}
         </p>
       </div>
 
       <div className="checkout-grid">
         <div className="product-card">
-          <h3>Shipping Details</h3>
+          <h3>{t("common.labels.shippingDetails")}</h3>
           <form onSubmit={handleSubmit} className="form-row">
             <div className="form-group">
-              <label>Full Name *</label>
+              <label>{t("common.labels.fullName")} *</label>
               <input
                 type="text"
                 name="fullName"
@@ -160,7 +181,7 @@ export default function Checkout() {
             </div>
 
             <div className="form-group">
-              <label>Phone Number *</label>
+              <label>{t("common.labels.phoneNumber")} *</label>
               <input
                 type="tel"
                 name="phone"
@@ -172,7 +193,7 @@ export default function Checkout() {
             </div>
 
             <div className="form-group">
-              <label>Address *</label>
+              <label>{t("common.labels.address")} *</label>
               <textarea
                 name="address"
                 value={formData.address}
@@ -185,7 +206,7 @@ export default function Checkout() {
 
             <div className="checkout-city-grid">
               <div className="form-group">
-                <label>City</label>
+                <label>{t("common.labels.city")}</label>
                 <input
                   type="text"
                   name="city"
@@ -196,7 +217,7 @@ export default function Checkout() {
               </div>
 
               <div className="form-group">
-                <label>State</label>
+                <label>{t("common.labels.state")}</label>
                 <input
                   type="text"
                   name="state"
@@ -208,7 +229,7 @@ export default function Checkout() {
             </div>
 
             <div className="form-group">
-              <label>Pincode</label>
+              <label>{t("common.labels.pincode")}</label>
               <input
                 type="text"
                 name="pincode"
@@ -219,7 +240,7 @@ export default function Checkout() {
             </div>
 
             <div className="form-group">
-              <label>Payment Method *</label>
+              <label>{t("common.labels.paymentMethod")} *</label>
               <select
                 name="paymentMethod"
                 value={formData.paymentMethod}
@@ -227,26 +248,28 @@ export default function Checkout() {
                 className="input"
                 required
               >
-                <option value="upi">UPI QR Code</option>
-                <option value="cod">Cash on Delivery</option>
+                <option value="upi">{t("farmer.checkout.upiOption")}</option>
+                <option value="cod">{t("farmer.checkout.codOption")}</option>
               </select>
             </div>
 
             <Button type="submit" className="btn primary square" disabled={loading} style={{ marginTop: "16px" }}>
-              {loading ? "Processing..." : "Place Order"}
+              {loading ? t("common.actions.processing") : t("common.actions.placeOrder")}
             </Button>
           </form>
         </div>
 
         <div>
           <div className="product-card">
-            <h3>Order Summary</h3>
+            <h3>{t("common.labels.orderSummary")}</h3>
             <div style={{ marginTop: "16px" }}>
               {cartItems.map((item, index) => (
                 <div key={index} className="checkout-summary-item">
                   <div style={{ flex: 1 }}>
                     <p style={{ fontWeight: "600", marginBottom: "4px" }}>{item.name}</p>
-                    <p style={{ fontSize: "14px", color: "var(--muted)" }}>Qty: {item.quantity || 1}</p>
+                    <p style={{ fontSize: "14px", color: "var(--muted)" }}>
+                      {t("common.labels.qty")}: {item.quantity || 1}
+                    </p>
                   </div>
                   <p style={{ fontWeight: "700", color: "#15803d" }}>INR {item.price || item.dailyRate}</p>
                 </div>
@@ -261,7 +284,7 @@ export default function Checkout() {
                   fontWeight: "700",
                 }}
               >
-                <span>Total:</span>
+                <span>{t("common.labels.total")}:</span>
                 <span style={{ color: "#15803d" }}>INR {getCartTotal()}</span>
               </div>
             </div>

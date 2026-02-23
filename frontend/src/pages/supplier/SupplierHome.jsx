@@ -302,7 +302,7 @@ export default function SupplierHome() {
             return (
               <article key={order.id} className="order-card">
                 <div>
-                  <p className="order-id">Order #{order.id}</p>
+                  <p className="order-id">Order #{order.displayOrderNumber ?? order.orderNumber ?? order.id}</p>
                   <p className="order-meta">
                     {order.user?.name || "Farmer"} • {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}
                   </p>

@@ -15,11 +15,39 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
 
+  const findCurrentSupplierId = (items) => {
+    const first = items.find((item) => item.supplierId != null);
+    return first ? Number(first.supplierId) : null;
+  };
+
+  const isDifferentSupplier = (items, incomingSupplierId) => {
+    const currentSupplierId = findCurrentSupplierId(items);
+    if (currentSupplierId == null || incomingSupplierId == null) return false;
+    return Number(currentSupplierId) !== Number(incomingSupplierId);
+  };
+
   // Load cart from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem("farmerCart");
     if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
+      try {
+        const parsed = JSON.parse(savedCart);
+        const hasLegacyItems = Array.isArray(parsed)
+          && parsed.some((item) => item?.supplierId == null);
+
+        if (hasLegacyItems) {
+          // Old cart format before supplier-isolated ordering support.
+          localStorage.removeItem("farmerCart");
+          setCartItems([]);
+          toast.info("Cart was refreshed for marketplace update. Please add items again.");
+          return;
+        }
+
+        setCartItems(Array.isArray(parsed) ? parsed : []);
+      } catch (error) {
+        localStorage.removeItem("farmerCart");
+        setCartItems([]);
+      }
     }
   }, []);
 
@@ -31,6 +59,11 @@ export const CartProvider = ({ children }) => {
   // Add product to cart
   const addProduct = (product) => {
     setCartItems((prev) => {
+      if (isDifferentSupplier(prev, product?.supplier?.id)) {
+        toast.error("You can place one supplier order at a time. Clear cart first.");
+        return prev;
+      }
+
       const existing = prev.find(
         (item) => item.id === product.id && item.type === "product"
       );
@@ -52,6 +85,8 @@ export const CartProvider = ({ children }) => {
           price: product.price,
           imageUrl: product.imageUrl,
           quantity: 1,
+          supplierId: product?.supplier?.id ?? null,
+          supplierName: product?.supplier?.name ?? "",
         },
       ];
     });
@@ -82,6 +117,11 @@ export const CartProvider = ({ children }) => {
       return false;
     }
 
+    if (isDifferentSupplier(cartItems, tool?.supplier?.id)) {
+      toast.error("You can place one supplier order at a time. Clear cart first.");
+      return false;
+    }
+
     setCartItems((prev) => [
       ...prev,
       {
@@ -94,6 +134,8 @@ export const CartProvider = ({ children }) => {
         endDate,
         days,
         totalPrice: tool.dailyRate * days,
+        supplierId: tool?.supplier?.id ?? null,
+        supplierName: tool?.supplier?.businessName || tool?.supplier?.name || "",
       },
     ]);
 
@@ -104,6 +146,11 @@ export const CartProvider = ({ children }) => {
   // Add crop to cart
   const addCrop = (crop) => {
     setCartItems((prev) => {
+      if (isDifferentSupplier(prev, crop?.supplier?.id)) {
+        toast.error("You can place one supplier order at a time. Clear cart first.");
+        return prev;
+      }
+
       const existing = prev.find(
         (item) => item.id === crop.id && item.type === "crop"
       );
@@ -125,6 +172,8 @@ export const CartProvider = ({ children }) => {
           price: crop.price,
           imageUrl: crop.imageUrl,
           quantity: 1,
+          supplierId: crop?.supplier?.id ?? null,
+          supplierName: crop?.supplier?.name ?? "",
         },
       ];
     });

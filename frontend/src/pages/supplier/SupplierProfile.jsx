@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import api from "../../api/axios";
 
 export default function SupplierProfile() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -25,6 +25,7 @@ export default function SupplierProfile() {
     totalOrders: 0,
   });
   const [statsError, setStatsError] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -204,6 +205,33 @@ export default function SupplierProfile() {
     []
   );
 
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      "Delete your account permanently? This will remove your profile and related data. This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingAccount(true);
+      try {
+        await api.delete("/api/user/account");
+      } catch (error) {
+        if (error?.response?.status === 404) {
+          await api.delete("/user/account");
+        } else {
+          throw error;
+        }
+      }
+      toast.success("Account deleted successfully");
+      logout();
+    } catch (error) {
+      console.error("Delete account error:", error);
+      toast.error(error?.response?.data?.message || "Failed to delete account");
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
   return (
     <div>
       <h2 className="dash-title">My Profile</h2>
@@ -352,18 +380,29 @@ export default function SupplierProfile() {
 
             <div className="profile-actions">
               {!isEditing ? (
-                <Button
-                  type="button"
-                  className="btn primary square"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log("Edit Profile button clicked, entering edit mode");
-                    setIsEditing(true);
-                  }}
-                >
-                  Edit Profile
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    className="btn primary square"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("Edit Profile button clicked, entering edit mode");
+                      setIsEditing(true);
+                    }}
+                  >
+                    Edit Profile
+                  </Button>
+                  <Button
+                    type="button"
+                    className="btn secondary square"
+                    onClick={handleDeleteAccount}
+                    loading={deletingAccount}
+                    style={{ background: "#fee", color: "#b42318", border: "1px solid #fdd" }}
+                  >
+                    Delete Account
+                  </Button>
+                </>
               ) : (
                 <>
                   <Button type="submit" className="btn primary square">

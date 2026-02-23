@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class OrderRequest {
     private List<Map<String, Object>> items;
+    private Long supplierId;
     private ShippingAddress shippingAddress;
     private String paymentMethod;
     private Double totalAmount;
@@ -17,6 +18,14 @@ public class OrderRequest {
 
     public void setItems(List<Map<String, Object>> items) {
         this.items = items;
+    }
+
+    public Long getSupplierId() {
+        return supplierId;
+    }
+
+    public void setSupplierId(Long supplierId) {
+        this.supplierId = supplierId;
     }
 
     public ShippingAddress getShippingAddress() {

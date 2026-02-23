@@ -2,8 +2,7 @@ package com.agriease.backend.controller;
 
 import com.agriease.backend.entity.Booking;
 import com.agriease.backend.entity.Equipment;
-import com.agriease.backend.entity.Order;
-import com.agriease.backend.entity.Product;
+import com.agriease.backend.dto.ProductMarketplaceDto;
 import com.agriease.backend.service.BookingService;
 import com.agriease.backend.service.EquipmentService;
 import com.agriease.backend.service.OrderService;
@@ -60,8 +59,8 @@ public class FarmerController {
     }
 
     @GetMapping("/products")
-    public List<Product> listProducts() {
-        return productService.getAllProducts();
+    public List<ProductMarketplaceDto> listProducts() {
+        return productService.getMarketplaceProducts();
     }
 
     @PutMapping("/profile")

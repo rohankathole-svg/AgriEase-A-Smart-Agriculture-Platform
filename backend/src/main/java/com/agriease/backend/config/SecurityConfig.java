@@ -35,15 +35,20 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                    // allow preflight requests
-                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/auth/**").permitAll()
-                    .requestMatchers("/public/**").permitAll()
-                    .requestMatchers("/farmer/**").hasRole("FARMER")
-                    .requestMatchers("/supplier/**").hasRole("SUPPLIER")
-                    .anyRequest().authenticated()
-            )
+                    .authorizeHttpRequests(auth -> auth
+                        // allow preflight requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(
+                            "/auth/login", "/auth/register",
+                            "/agriease/auth/login", "/agriease/auth/register"
+                        ).permitAll()
+                        .requestMatchers("/error", "/agriease/error").permitAll()
+                        .requestMatchers("/public/**", "/agriease/public/**").permitAll()
+                        .requestMatchers("/api/user/**", "/agriease/api/user/**", "/user/**", "/agriease/user/**").hasAnyRole("FARMER", "SUPPLIER")
+                        .requestMatchers("/farmer/**", "/agriease/farmer/**").hasRole("FARMER")
+                        .requestMatchers("/supplier/**", "/agriease/supplier/**").hasRole("SUPPLIER")
+                        .anyRequest().authenticated()
+                    )
             .httpBasic(Customizer.withDefaults());
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

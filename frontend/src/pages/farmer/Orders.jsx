@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import Button from "../../components/ui/Button";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(null);
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     fetchOrders();
@@ -20,7 +22,7 @@ export default function Orders() {
         setLoading(false);
       })
       .catch(() => {
-        toast.error("Failed to load orders");
+        toast.error(t("messages.loadOrdersError"));
         setLoading(false);
       });
   };
@@ -34,14 +36,14 @@ export default function Orders() {
     try {
       const response = await api.put(`/farmer/orders/${orderId}/cancel`);
       console.log("Cancel response:", response.data);
-      toast.success("Order cancelled successfully");
+      toast.success(t("farmer.orders.toastCancelled"));
       fetchOrders(); // Refresh the orders list
     } catch (error) {
       console.error("Cancel error:", error);
       console.error("Error response:", error?.response);
       
       if (error?.response?.status === 401) {
-        toast.error("Session expired. Please logout and login again.");
+        toast.error(t("messages.sessionExpired"));
         
         // Show localStorage data for debugging
         const userData = localStorage.getItem("user");
@@ -83,47 +85,55 @@ export default function Orders() {
     }
   };
 
+  const translateStatusLabel = (status) => {
+    if (!status) return "";
+    const normalized = status.toLowerCase();
+    return t(`status.${normalized}`) || status;
+  };
+
   const getStatusMessage = (status, paymentStatus) => {
     switch (status) {
       case "PENDING":
-        return paymentStatus === "PAID" 
-          ? "🕐 Waiting for supplier confirmation" 
-          : "🕐 Pending payment & supplier confirmation";
+        return paymentStatus === "PAID"
+          ? t("farmer.orders.status.pendingPaid")
+          : t("farmer.orders.status.pendingUnpaid");
       case "CONFIRMED":
-        return "✅ Confirmed by supplier - Being prepared";
+        return t("farmer.orders.status.confirmed");
       case "DELIVERED":
-        return "📦 Delivered";
+        return t("farmer.orders.status.delivered");
       case "CANCELLED":
-        return "❌ Cancelled";
+        return t("farmer.orders.status.cancelled");
       default:
         return "";
     }
   };
 
   if (loading) {
-    return <p>Loading orders...</p>;
+    return <p>{t("common.labels.loadingOrders")}</p>;
   }
 
   return (
     <div>
-      <h2 className="dash-title">My Orders</h2>
-      <p className="dash-subtitle">Track your order and booking history</p>
+      <h2 className="dash-title">{t("farmer.orders.title")}</h2>
+      <p className="dash-subtitle">{t("farmer.orders.subtitle")}</p>
 
       <div style={{ marginTop: "24px" }}>
         {orders.length === 0 && (
           <div className="product-card" style={{ textAlign: "center", padding: "40px" }}>
             <p style={{ fontSize: "18px", color: "var(--muted)" }}>
-              No orders yet. Start shopping!
+              {t("farmer.orders.empty")}
             </p>
           </div>
         )}
 
-        {orders.map((order) => (
+        {orders.map((order) => {
+          const displayOrderNumber = order.displayOrderNumber ?? order.id;
+          return (
           <div key={order.id} className="product-card" style={{ marginBottom: "16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "12px" }}>
-                  <h4>Order #{order.id}</h4>
+                  <h4>{t("common.labels.orderId")} #{displayOrderNumber}</h4>
                   <span
                     className="cart-item-type"
                     style={{
@@ -131,7 +141,7 @@ export default function Orders() {
                       color: getStatusColor(order.status),
                     }}
                   >
-                    {order.status}
+                    {translateStatusLabel(order.status)}
                   </span>
                 </div>
 
@@ -140,7 +150,7 @@ export default function Orders() {
                 </p>
 
                 <p style={{ fontSize: "14px", color: "var(--muted)", marginBottom: "8px" }}>
-                  Placed on: {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                  {t("common.labels.orderDate")}: {new Date(order.createdAt).toLocaleDateString(language === "mr" ? "mr-IN" : "en-IN", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
@@ -148,7 +158,7 @@ export default function Orders() {
                 </p>
 
                 <div style={{ marginTop: "16px" }}>
-                  <p style={{ fontWeight: "600", marginBottom: "8px" }}>Items:</p>
+                  <p style={{ fontWeight: "600", marginBottom: "8px" }}>{t("common.labels.items")}</p>
                   {order.items?.map((item, index) => (
                     <div
                       key={index}
@@ -167,7 +177,7 @@ export default function Orders() {
 
                 {order.shippingAddress && (
                   <div style={{ marginTop: "16px" }}>
-                    <p style={{ fontWeight: "600", marginBottom: "4px" }}>Shipping Address:</p>
+                    <p style={{ fontWeight: "600", marginBottom: "4px" }}>{t("common.labels.shippingAddress")}:</p>
                     <p style={{ fontSize: "14px", color: "var(--muted)" }}>
                       {order.shippingAddress.fullName}<br />
                       {order.shippingAddress.phone}<br />
@@ -182,7 +192,9 @@ export default function Orders() {
                   INR {order.totalAmount}
                 </p>
                 <p style={{ fontSize: "14px", color: "var(--muted)", marginTop: "4px" }}>
-                  {order.paymentMethod?.toUpperCase()}
+                  {order.paymentStatus === "PAID"
+                    ? t("common.labels.paymentPaid")
+                    : t("common.labels.paymentPending")}
                 </p>
                 
                 {order.status === "PENDING" && (
@@ -199,13 +211,13 @@ export default function Orders() {
                       border: "1px solid #fdd"
                     }}
                   >
-                    {cancelling === order.id ? "Cancelling..." : "Cancel Order"}
+                    {cancelling === order.id ? t("farmer.orders.cancelling") : t("common.actions.cancelOrder")}
                   </Button>
                 )}
               </div>
             </div>
           </div>
-        ))}
+        )})}
       </div>
     </div>
   );

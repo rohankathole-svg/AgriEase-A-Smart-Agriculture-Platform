@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import api from "../../api/axios";
 import { useCart } from "../../context/CartContext";
 import { getSafeImageUrl, onImageError } from "../../utils/imageUtils";
+import { useLanguage } from "../../context/LanguageContext";
 
 const EQUIPMENT_CACHE_KEY = "agriease-equipment-cache-v1";
 
@@ -16,6 +17,7 @@ function Tools() {
   const [lastSynced, setLastSynced] = useState(null);
   const { addToolBooking } = useCart();
   const controllerRef = useRef();
+  const { t, language } = useLanguage();
 
   const hydrateFromCache = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -55,8 +57,8 @@ function Tools() {
         return;
       }
       console.error("Failed to load equipment", err);
-      setError("Unable to load equipment. Please try again.");
-      toast.error("Failed to load equipment");
+      setError(t("messages.loadEquipmentError"));
+      toast.error(t("messages.loadEquipmentError"));
     } finally {
       setIsLoading(false);
     }
@@ -70,21 +72,21 @@ function Tools() {
 
   const handleAddToCart = (tool) => {
     if (!startDate || !endDate) {
-      toast.error("Select rental dates to proceed");
+      toast.error(t("messages.selectRentalDates"));
       return;
     }
     if (new Date(endDate) < new Date(startDate)) {
-      toast.error("End date must be after start date");
+      toast.error(t("messages.endDateInvalid"));
       return;
     }
     addToolBooking(tool, startDate, endDate);
-    toast.success("Equipment reserved in cart");
+    toast.success(t("messages.equipmentReserved"));
   };
 
   return (
     <div>
-      <h2 className="dash-title">Rent Tools</h2>
-      <p className="dash-subtitle">Reserve equipment with flexible dates.</p>
+      <h2 className="dash-title">{t("farmer.tools.title")}</h2>
+      <p className="dash-subtitle">{t("farmer.tools.subtitle")}</p>
 
       <div className="chip-row">
         <input
@@ -106,21 +108,21 @@ function Tools() {
           loading={isLoading}
           type="button"
         >
-          Refresh list
+          {t("farmer.home.refresh")}
         </Button>
       </div>
 
       {lastSynced && (
         <p className="data-sync-meta">
-          Last synced: {new Date(lastSynced).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {t("common.labels.lastSynced")}: {new Date(lastSynced).toLocaleTimeString(language === "mr" ? "mr-IN" : undefined, { hour: "2-digit", minute: "2-digit" })}
         </p>
       )}
 
       {error && <p className="inline-error">{error}</p>}
 
       <div className="product-grid">
-        {isLoading && tools.length === 0 && <p>Loading equipment...</p>}
-        {!isLoading && tools.length === 0 && !error && <p>No tools available</p>}
+        {isLoading && tools.length === 0 && <p>{t("farmer.tools.loading")}</p>}
+        {!isLoading && tools.length === 0 && !error && <p>{t("farmer.tools.empty")}</p>}
 
         {tools.map((p) => (
           <div key={p.id} className="product-card reveal">
@@ -137,6 +139,11 @@ function Tools() {
             <p style={{ fontSize: "18px", fontWeight: "700", color: "#15803d" }}>
               INR {p.dailyRate} / day
             </p>
+            {p.supplier && (
+              <p style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "8px" }}>
+                Supplier: {p.supplier.businessName || p.supplier.name} | Rating: {p.supplier.rating ?? 0} | {(p.supplier.city || "") + (p.supplier.state ? `, ${p.supplier.state}` : "")}
+              </p>
+            )}
             <span
               className="cart-item-type"
               style={{
@@ -146,7 +153,7 @@ function Tools() {
                 display: "inline-block"
               }}
             >
-              {p.available ? "Available" : "Not Available"}
+              {p.available ? t("farmer.tools.available") : t("farmer.tools.unavailable")}
             </span>
             <Button
               className="btn primary square"
@@ -157,7 +164,7 @@ function Tools() {
                 cursor: p.available ? "pointer" : "not-allowed",
               }}
             >
-              {p.available ? "Add to Cart" : "Unavailable"}
+              {p.available ? t("common.actions.addToCart") : t("farmer.tools.unavailable")}
             </Button>
           </div>
         ))}

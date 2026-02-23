@@ -4,10 +4,12 @@ import WeatherWidget from "../../components/WeatherWidget";
 import Button from "../../components/ui/Button";
 import api from "../../api/axios";
 import { useAuth } from "../../auth/AuthContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 function FarmerHome() {
   const navigate = useNavigate();
   const { user, updateUser } = useAuth();
+  const { t, language } = useLanguage();
   const [profile, setProfile] = useState(user);
   const [orders, setOrders] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -34,7 +36,7 @@ function FarmerHome() {
       setBookings(Array.isArray(bookingsRes.data) ? bookingsRes.data : []);
     } catch (err) {
       console.error("Failed to load farmer dashboard", err);
-      setError("Unable to sync with server. Showing cached data.");
+      setError(t("messages.unableSync"));
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ function FarmerHome() {
     ? farmSizeRaw.toLowerCase().includes("acre")
       ? farmSizeRaw
       : `${farmSizeRaw} acres`
-    : "Add in profile";
+    : t("farmer.home.addFarmSize");
 
   const cropSummary = useMemo(() => {
     const fromProfile = (profile?.cropTypes || user?.cropTypes || "")
@@ -93,30 +95,30 @@ function FarmerHome() {
 
   const statCards = [
     {
-      label: "Farm Size",
+      label: t("farmer.home.stat.farmSize.label"),
       value: farmSizeDisplay,
-      helper: "Your cultivated land",
+      helper: t("farmer.home.stat.farmSize.helper"),
       icon: "🌱",
       background: "linear-gradient(135deg, #c7f7d4, #a7ebb8)",
     },
     {
-      label: "Avg Health",
+      label: t("farmer.home.stat.avgHealth.label"),
       value: `${avgHealth || 0}%`,
-      helper: "Crop vitality",
+      helper: t("farmer.home.stat.avgHealth.helper"),
       icon: "📊",
       background: "linear-gradient(135deg, #dbe8ff, #b7cbff)",
     },
     {
-      label: "Market Orders",
+      label: t("farmer.home.stat.marketOrders.label"),
       value: orders.length,
-      helper: "Placed this season",
+      helper: t("farmer.home.stat.marketOrders.helper"),
       icon: "📦",
       background: "linear-gradient(135deg, #f2dcff, #e0b7ff)",
     },
     {
-      label: "Active Rentals",
+      label: t("farmer.home.stat.rentals.label"),
       value: activeRentals,
-      helper: "Equipment on field",
+      helper: t("farmer.home.stat.rentals.helper"),
       icon: "🛠️",
       background: "linear-gradient(135deg, #ffd9b3, #ffba82)",
     },
@@ -124,29 +126,29 @@ function FarmerHome() {
 
   const quickCards = [
     {
-      title: "Browse Market",
-      subtitle: "Seeds, inputs and supplies",
+      title: t("farmer.home.quick.market.title"),
+      subtitle: t("farmer.home.quick.market.subtitle"),
       accent: "#2b73ff",
       icon: "🛒",
       path: "/farmer/market",
     },
     {
-      title: "Rent Equipment",
-      subtitle: "Book verified machines",
+      title: t("farmer.home.quick.tools.title"),
+      subtitle: t("farmer.home.quick.tools.subtitle"),
       accent: "#f59f00",
       icon: "🛠️",
       path: "/farmer/tools",
     },
     {
-      title: "Disease Detection",
-      subtitle: "AI crop scans",
+      title: t("farmer.home.quick.disease.title"),
+      subtitle: t("farmer.home.quick.disease.subtitle"),
       accent: "#7c3aed",
       icon: "🔬",
       path: "/farmer/disease",
     },
     {
-      title: "My Orders",
-      subtitle: "Track deliveries",
+      title: t("farmer.home.quick.orders.title"),
+      subtitle: t("farmer.home.quick.orders.subtitle"),
       accent: "#ef476f",
       icon: "📦",
       path: "/farmer/orders",
@@ -154,13 +156,13 @@ function FarmerHome() {
   ];
 
   const formattedDate = useMemo(() => {
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(language === "mr" ? "mr-IN" : "en-US", {
       weekday: "long",
       month: "long",
       day: "numeric",
       year: "numeric",
     }).format(new Date());
-  }, []);
+  }, [language]);
 
   const greetingName = profile?.name || user?.name || "farmer";
 
@@ -170,14 +172,12 @@ function FarmerHome() {
         <div>
           <p className="hero-date">{formattedDate}</p>
           <h1>
-            Welcome back, {greetingName.split(" ")[0]}! <span role="img" aria-label="farmer">👩‍🌾</span>
+            {t("farmer.home.heroGreetingPrefix")}, {greetingName.split(" ")[0]}! <span role="img" aria-label="farmer">👩‍🌾</span>
           </h1>
-          <p className="dash-subtitle">
-            Stay on top of your fields, equipment, and market activity from one screen.
-          </p>
+          <p className="dash-subtitle">{t("farmer.home.heroSubtitle")}</p>
         </div>
         <Button className="btn outline" onClick={loadDashboard} loading={loading}>
-          Refresh data
+          {t("farmer.home.refresh")}
         </Button>
       </div>
 
@@ -223,22 +223,23 @@ function FarmerHome() {
       <section className="farmer-section">
         <header>
           <div>
-            <p className="section-kicker">Crop Health Summary</p>
-            <h2>Monitor your fields</h2>
+            <p className="section-kicker">{t("farmer.home.cropsSection.kicker")}</p>
+            <h2>{t("farmer.home.cropsSection.title")}</h2>
           </div>
           <Button className="btn ghost" onClick={() => navigate("/farmer/disease")}>
-            View all →
+            {t("farmer.home.cropsSection.cta")}
           </Button>
         </header>
         <div className="crop-list">
           {cropSummary.map((item, index) => {
-            const status = item.score >= 85 ? "Healthy" : item.score >= 75 ? "Monitor" : "Attention";
+            const statusKey = item.score >= 85 ? "healthy" : item.score >= 75 ? "monitor" : "attention";
+            const status = t(`farmer.home.cropsSection.statuses.${statusKey}`);
             const badgeClass = item.score >= 85 ? "success" : item.score >= 75 ? "warn" : "alert";
             return (
               <article key={`${item.crop}-${index}`} className="crop-item">
                 <div>
                   <p className="crop-name">{item.crop}</p>
-                  <span className="crop-meta">{item.acres} acres</span>
+                  <span className="crop-meta">{item.acres} {t("farmer.home.cropsSection.acres")}</span>
                 </div>
                 <div className="crop-score">
                   <span className={`score-badge ${badgeClass}`}>{status}</span>

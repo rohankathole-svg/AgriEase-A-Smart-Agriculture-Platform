@@ -37,14 +37,29 @@ public class OrderService {
 
     @Transactional
     public Map<String, Object> createOrder(OrderRequest request, String email) {
-        User user = userRepository.findByEmail(email)
+        User farmer = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new RuntimeException("Order must contain at least one item");
+        }
+
         Order order = new Order();
-        order.setUser(user);
+        order.setFarmer(farmer);
+        
+        // Calculate next display order number for this farmer
+        // Using a simple approach that works in most cases
+        // In rare race conditions, resequencing will fix any gaps
+        long existingOrderCount = orderRepository.countByFarmer(farmer);
+        int nextDisplayOrderNumber = (int)(existingOrderCount + 1);
+        order.setDisplayOrderNumber(nextDisplayOrderNumber);
         order.setShippingAddress(request.getShippingAddress());
         order.setPaymentMethod(request.getPaymentMethod());
         order.setTotalAmount(request.getTotalAmount());
+
+        Long supplierId = resolveAndValidateSupplierId(request);
+        User supplier = userRepository.findById(supplierId)
+                .orElseThrow(() -> new RuntimeException("Supplier not found"));
 
         // Create order items
         List<OrderItem> orderItems = new ArrayList<>();
@@ -53,6 +68,7 @@ public class OrderService {
             item.setOrder(order);
             item.setName((String) itemData.get("name"));
             item.setProductType((String) itemData.get("type"));
+            item.setSupplier(supplier);
             
             // Convert to double safely
             Object priceObj = itemData.get("price");
@@ -72,14 +88,6 @@ public class OrderService {
                 Long productId = Long.valueOf(idObj.toString());
                 item.setProductId(productId);
 
-                // Get supplier based on product type
-                String type = (String) itemData.get("type");
-                if ("product".equals(type) || "crop".equals(type)) {
-                    // Both products and crops are in products table
-                    productRepository.findById(productId).ifPresent(p -> item.setSupplier(p.getSupplier()));
-                } else if ("tool".equals(type)) {
-                    equipmentRepository.findById(productId).ifPresent(e -> item.setSupplier(e.getSupplier()));
-                }
             }
 
             item.setImageUrl((String) itemData.get("imageUrl"));
@@ -104,25 +112,38 @@ public class OrderService {
         order.setItems(orderItems);
         Order savedOrder = orderRepository.save(order);
 
-        return Map.of("orderId", savedOrder.getId(), "status", "success");
+        return Map.of(
+            "orderId", savedOrder.getId(),
+            "displayOrderNumber", savedOrder.getDisplayOrderNumber(),
+            "orderNumber", savedOrder.getDisplayOrderNumber(),
+            "status", "success");
     }
 
     public List<Order> getFarmerOrders(String email) {
-        User user = userRepository.findByEmail(email)
+        User farmer = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return orderRepository.findByUserOrderByCreatedAtDesc(user);
+        return orderRepository.findByFarmerWithItemsOrderByCreatedAtDesc(farmer);
     }
 
     public List<Order> getSupplierOrders(String email) {
         User supplier = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return orderRepository.findOrdersBySupplier(supplier);
+        return orderRepository.findBySupplierWithItemsOrderByCreatedAtDesc(supplier);
     }
 
     @Transactional
-    public void updateOrderStatus(Long orderId, String status) {
+    public void updateOrderStatus(Long orderId, String status, String supplierEmail) {
+        User supplier = userRepository.findByEmail(supplierEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        boolean supplierOwnsOrder = order.getItems().stream()
+                .anyMatch(item -> item.getSupplier() != null && item.getSupplier().getId().equals(supplier.getId()));
+        if (!supplierOwnsOrder) {
+            throw new RuntimeException("Order not found");
+        }
         order.setStatus(status);
         orderRepository.save(order);
     }
@@ -141,7 +162,7 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         
         // Verify the order belongs to this farmer
-        if (!order.getUser().getEmail().equals(email)) {
+        if (!order.getFarmer().getEmail().equals(email)) {
             throw new RuntimeException("You can only cancel your own orders");
         }
         
@@ -155,6 +176,29 @@ public class OrderService {
     }
 
     @Transactional
+    public void deleteFarmerOrder(Long orderId, String email) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        
+        // Verify the order belongs to this farmer
+        if (!order.getFarmer().getEmail().equals(email)) {
+            throw new RuntimeException("You can only delete your own orders");
+        }
+        
+        // Only allow deleting completed orders (DELIVERED or CANCELLED)
+        if (!"DELIVERED".equals(order.getStatus()) && !"CANCELLED".equals(order.getStatus())) {
+            throw new RuntimeException("Only delivered or cancelled orders can be deleted");
+        }
+        
+        // Delete associated payments first to avoid foreign key constraint violation
+        paymentRepository.findByOrder(order).ifPresent(paymentRepository::delete);
+        
+        User farmer = order.getFarmer();
+        orderRepository.delete(order);
+        resequenceDisplayOrderNumbers(farmer);
+    }
+
+    @Transactional
     public void deleteSupplierOrder(Long orderId, String email) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -162,10 +206,9 @@ public class OrderService {
         // Verify this order belongs to this supplier
         User supplier = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
+
         boolean isSupplierOrder = order.getItems().stream()
                 .anyMatch(item -> item.getSupplier() != null && item.getSupplier().getId().equals(supplier.getId()));
-        
         if (!isSupplierOrder) {
             throw new RuntimeException("You can only delete your own orders");
         }
@@ -179,6 +222,7 @@ public class OrderService {
         paymentRepository.findByOrder(order).ifPresent(paymentRepository::delete);
         
         orderRepository.delete(order);
+        resequenceDisplayOrderNumbers(order.getFarmer());
     }
 
     @Transactional
@@ -219,7 +263,11 @@ public class OrderService {
         userMap.put("id", user.getId());
         userMap.put("name", user.getName() != null ? user.getName() : "");
         userMap.put("email", user.getEmail());
-        userMap.put("role", user.getRole());
+        userMap.put("role", user.getActiveRole() != null ? user.getActiveRole().canonical().name() : null);
+        userMap.put("roles", user.getRoles().stream()
+            .map(r -> r.getRole().canonical().name())
+            .distinct()
+            .toArray(String[]::new));
         userMap.put("phone", user.getPhone() != null ? user.getPhone() : "");
         userMap.put("address", user.getAddress() != null ? user.getAddress() : "");
         userMap.put("city", user.getCity() != null ? user.getCity() : "");
@@ -231,6 +279,75 @@ public class OrderService {
         userMap.put("businessType", user.getBusinessType() != null ? user.getBusinessType() : "");
         userMap.put("profilePhoto", user.getProfilePhoto() != null ? user.getProfilePhoto() : "");
         return userMap;
+    }
+
+    @Transactional
+    public void resequenceDisplayOrderNumbers(User farmer) {
+        List<Order> farmerOrders = orderRepository.findByFarmerOrderByCreatedAtAsc(farmer);
+        boolean updated = false;
+        int counter = 1;
+
+        for (Order farmerOrder : farmerOrders) {
+            if (farmerOrder.getDisplayOrderNumber() == null || !farmerOrder.getDisplayOrderNumber().equals(counter)) {
+                farmerOrder.setDisplayOrderNumber(counter);
+                updated = true;
+            }
+            counter++;
+        }
+
+        if (updated) {
+            orderRepository.saveAll(farmerOrders);
+        }
+    }
+
+    private Long resolveAndValidateSupplierId(OrderRequest request) {
+        Long requestedSupplierId = request.getSupplierId();
+        Long detectedSupplierId = null;
+
+        for (Map<String, Object> itemData : request.getItems()) {
+            Long itemSupplierId = detectSupplierId(itemData);
+            if (itemSupplierId == null) {
+                throw new RuntimeException("Unable to resolve supplier for item: " + itemData.get("name"));
+            }
+            if (detectedSupplierId == null) {
+                detectedSupplierId = itemSupplierId;
+            } else if (!detectedSupplierId.equals(itemSupplierId)) {
+                throw new RuntimeException("Order items must belong to a single supplier");
+            }
+        }
+
+        if (requestedSupplierId != null && !requestedSupplierId.equals(detectedSupplierId)) {
+            throw new RuntimeException("Order supplier does not match selected items");
+        }
+
+        return detectedSupplierId;
+    }
+
+    private Long detectSupplierId(Map<String, Object> itemData) {
+        Object supplierIdObj = itemData.get("supplierId");
+        if (supplierIdObj != null) {
+            return Long.valueOf(supplierIdObj.toString());
+        }
+
+        Object idObj = itemData.get("id");
+        Object typeObj = itemData.get("type");
+        if (idObj == null || typeObj == null) {
+            return null;
+        }
+
+        Long entityId = Long.valueOf(idObj.toString());
+        String type = typeObj.toString();
+        if ("product".equals(type) || "crop".equals(type)) {
+            return productRepository.findById(entityId)
+                    .map(p -> p.getSupplier().getId())
+                    .orElse(null);
+        }
+        if ("tool".equals(type)) {
+            return equipmentRepository.findById(entityId)
+                    .map(e -> e.getSupplier().getId())
+                    .orElse(null);
+        }
+        return null;
     }
 }
 

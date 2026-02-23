@@ -1,30 +1,32 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import "../styles/landing.css";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { useLanguage } from "../context/LanguageContext";
 
 const stats = [
-  { label: "Verified Farmers", value: "2.4K+" },
-  { label: "Supplier Listings", value: "650+" },
-  { label: "On-Time Delivery", value: "98%" },
-  { label: "Support Availability", value: "24/7" },
+  { labelKey: "landing.stats.verifiedFarmers", value: "2.4K+" },
+  { labelKey: "landing.stats.supplierListings", value: "650+" },
+  { labelKey: "landing.stats.onTimeDelivery", value: "98%" },
+  { labelKey: "landing.stats.supportAvailability", value: "24/7" },
 ];
 
 const highlights = [
   {
-    title: "Equipment Access",
-    text: "Book modern equipment on flexible schedules without high upfront cost.",
+    titleKey: "landing.features.highlights.equipment.title",
+    textKey: "landing.features.highlights.equipment.text",
     image:
       "https://images.pexels.com/photos/2933243/pexels-photo-2933243.jpeg?auto=compress&cs=tinysrgb&w=1200",
   },
   {
-    title: "Input Marketplace",
-    text: "Buy verified seeds, nutrients, and crop-care products from trusted suppliers.",
+    titleKey: "landing.features.highlights.marketplace.title",
+    textKey: "landing.features.highlights.marketplace.text",
     image:
       "https://images.pexels.com/photos/2132250/pexels-photo-2132250.jpeg?auto=compress&cs=tinysrgb&w=1200",
   },
   {
-    title: "AI Disease Detection",
-    text: "Upload crop photos and receive instant diagnosis with practical treatment tips.",
+    titleKey: "landing.features.highlights.ai.title",
+    textKey: "landing.features.highlights.ai.text",
     image:
       "https://images.pexels.com/photos/7728084/pexels-photo-7728084.jpeg?auto=compress&cs=tinysrgb&w=1200",
   },
@@ -33,20 +35,20 @@ const highlights = [
 const steps = [
   {
     id: "01",
-    title: "Create Your Account",
-    detail: "Join as farmer or supplier in under two minutes.",
+    titleKey: "landing.workflow.steps.account.title",
+    detailKey: "landing.workflow.steps.account.detail",
     route: "/register",
   },
   {
     id: "02",
-    title: "Discover Services",
-    detail: "Browse products, equipment, and AI crop health tools.",
+    titleKey: "landing.workflow.steps.discover.title",
+    detailKey: "landing.workflow.steps.discover.detail",
     route: "/login",
   },
   {
     id: "03",
-    title: "Manage Everything",
-    detail: "Track bookings, orders, delivery, and payments in one dashboard.",
+    titleKey: "landing.workflow.steps.manage.title",
+    detailKey: "landing.workflow.steps.manage.detail",
     route: "/login",
   },
 ];
@@ -78,6 +80,7 @@ function handleImageError(event) {
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <div className="page landing-page">
@@ -87,17 +90,18 @@ export default function Landing() {
         <button className="brand" onClick={() => navigate("/")}>
           <img
             src="/logo-full.svg"
-            alt="AgriEase - Growing Smarter"
+            alt={t("common.brandAlt")}
             className="brand-logo"
           />
         </button>
 
         <div className="nav-actions">
+          <LanguageSwitcher />
           <button className="btn outline" onClick={() => navigate("/login")}>
-            Login
+            {t("common.login")}
           </button>
           <button className="btn primary" onClick={() => navigate("/register")}>
-            Register
+            {t("common.register")}
           </button>
         </div>
       </header>
@@ -110,30 +114,27 @@ export default function Landing() {
           animate="show"
         >
           <motion.div className="hero-content" variants={fadeUp} transition={{ duration: 0.5 }}>
-            <span className="pill">Smart agriculture ecosystem</span>
+            <span className="pill">{t("landing.pill")}</span>
             <h1>
-              Grow faster with <span>AgriEase</span>
+              {t("landing.heroTitle")} <span>{t("landing.heroHighlight")}</span>
             </h1>
-            <p>
-              A single platform for equipment rentals, agri-input purchases, and
-              AI-powered crop disease detection designed for real farm workflows.
-            </p>
+            <p>{t("landing.heroDescription")}</p>
 
             <div className="hero-actions">
               <button
                 className="btn primary"
                 onClick={() => navigate("/register", { state: { role: "FARMER" } })}
               >
-                Join as Farmer
+                {t("common.joinFarmer")}
               </button>
               <button
                 className="btn outline"
                 onClick={() => navigate("/register", { state: { role: "SUPPLIER" } })}
               >
-                Join as Supplier
+                {t("common.joinSupplier")}
               </button>
               <button className="btn ghost" onClick={() => navigate("/login")}>
-                Already have an account
+                {t("common.alreadyAccount")}
               </button>
             </div>
           </motion.div>
@@ -159,25 +160,22 @@ export default function Landing() {
         >
           {stats.map((item) => (
             <motion.article
-              key={item.label}
+              key={item.labelKey}
               className="stat-card"
               variants={fadeUp}
               transition={{ duration: 0.45 }}
             >
               <strong>{item.value}</strong>
-              <p>{item.label}</p>
+              <p>{t(item.labelKey)}</p>
             </motion.article>
           ))}
         </motion.section>
 
         <section className="features-section">
           <div className="section-heading">
-            <span className="pill muted">Why AgriEase</span>
-            <h2>Purpose-built tools for modern agriculture</h2>
-            <p>
-              Structured workflows, trusted suppliers, and AI insights so teams can
-              act quickly with confidence.
-            </p>
+            <span className="pill muted">{t("landing.features.pill")}</span>
+            <h2>{t("landing.features.heading")}</h2>
+            <p>{t("landing.features.description")}</p>
           </div>
 
           <motion.div
@@ -189,17 +187,17 @@ export default function Landing() {
           >
             {highlights.map((card) => (
               <motion.article
-                key={card.title}
+                key={card.titleKey}
                 className="feature-card"
                 variants={fadeUp}
                 transition={{ duration: 0.45 }}
               >
                 <div className="feature-image">
-                  <img src={card.image} alt={card.title} loading="lazy" onError={handleImageError} />
+                  <img src={card.image} alt={t(card.titleKey)} loading="lazy" onError={handleImageError} />
                 </div>
                 <div className="feature-body">
-                  <h3>{card.title}</h3>
-                  <p>{card.text}</p>
+                  <h3>{t(card.titleKey)}</h3>
+                  <p>{t(card.textKey)}</p>
                 </div>
               </motion.article>
             ))}
@@ -208,8 +206,8 @@ export default function Landing() {
 
         <section className="workflow-section">
           <div className="section-heading">
-            <span className="pill muted">How it works</span>
-            <h2>Get started in three clear steps</h2>
+            <span className="pill muted">{t("landing.workflow.pill")}</span>
+            <h2>{t("landing.workflow.heading")}</h2>
           </div>
 
           <motion.div
@@ -229,8 +227,8 @@ export default function Landing() {
                 <button className="step-id" onClick={() => navigate(step.route)}>
                   {step.id}
                 </button>
-                <h3>{step.title}</h3>
-                <p>{step.detail}</p>
+                <h3>{t(step.titleKey)}</h3>
+                <p>{t(step.detailKey)}</p>
               </motion.article>
             ))}
           </motion.div>
@@ -244,22 +242,19 @@ export default function Landing() {
           transition={{ duration: 0.5 }}
         >
           <div>
-            <p className="pill inverted">Start today</p>
-            <h2>Bring your farm operations into one reliable platform</h2>
-            <p>
-              Improve decisions, reduce delays, and keep your crop lifecycle data
-              connected from field to delivery.
-            </p>
+            <p className="pill inverted">{t("landing.cta.pill")}</p>
+            <h2>{t("landing.cta.heading")}</h2>
+            <p>{t("landing.cta.text")}</p>
           </div>
           <button className="btn primary" onClick={() => navigate("/register")}>
-            Create Free Account
+            {t("landing.cta.button")}
           </button>
         </motion.section>
       </main>
 
       <footer className="landing-footer container">
-        <span>{`(c) ${new Date().getFullYear()} AgriEase`}</span>
-        <Link to="/login">Already a member? Login</Link>
+        <span>{`(c) ${new Date().getFullYear()} ${t("common.brandName")}`}</span>
+        <Link to="/login">{t("landing.footer.loginLink")}</Link>
       </footer>
     </div>
   );

@@ -5,9 +5,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import com.agriease.backend.entity.RoleType;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
@@ -51,8 +52,9 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String username, String role) {
-        return createToken(Map.of("role", role), username);
+    public String generateToken(String username, RoleType role) {
+        String roleClaim = role != null ? role.canonical().name() : null;
+        return createToken(roleClaim != null ? Map.of("role", roleClaim) : Map.of(), username);
     }
 
     private String createToken(Map<String, Object> claims, String subject) {

@@ -16,10 +16,12 @@ public class OrderItem {
     private Order order;
 
     @ManyToOne
+    @JsonIgnore
     private User supplier; // The supplier of this item
 
     @ManyToOne
     @JoinColumn(name = "old_product_id")
+    @JsonIgnore
     private Product product;
 
     @Column(name = "product_id")

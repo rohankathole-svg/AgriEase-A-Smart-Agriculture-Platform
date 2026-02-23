@@ -1,5 +1,6 @@
 package com.agriease.backend.config;
 
+import com.agriease.backend.entity.RoleType;
 import com.agriease.backend.entity.User;
 import com.agriease.backend.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,10 +25,19 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+        RoleType role = user.getActiveRole();
+        if (role == null) {
+            role = user.getRoles().stream()
+                .findFirst()
+                .map(r -> r.getRole())
+                .orElse(RoleType.FARMER);
+        }
+        role = role.canonical();
+
         return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+            user.getEmail(),
+            user.getPassword(),
+            List.of(new SimpleGrantedAuthority("ROLE_" + role.name()))
         );
     }
 }

@@ -1,6 +1,10 @@
 package com.agriease.backend.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -16,10 +20,15 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
-    @Column(nullable = false)
-    private String role; // FARMER / SUPPLIER
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private RoleType activeRole;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private Set<UserRole> roles = new HashSet<>();
 
     private String phone;
     private String address;
@@ -28,11 +37,12 @@ public class User {
     private String pincode;
     private String farmSize;
     private String cropTypes;
-    private String businessName;  // For suppliers
-    private String businessType;  // For suppliers
-    
+    private String businessName;
+    private String businessType;
+    private Double rating;
+
     @Column(columnDefinition = "TEXT")
-    private String profilePhoto; // Base64 encoded image or URL
+    private String profilePhoto;
 
     public Long getId() {
         return id;
@@ -66,12 +76,31 @@ public class User {
         this.password = password;
     }
 
-    public String getRole() {
-        return role;
+    public RoleType getActiveRole() {
+        return activeRole;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setActiveRole(RoleType activeRole) {
+        this.activeRole = activeRole;
+    }
+
+    public Set<UserRole> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<UserRole> roles) {
+        this.roles = roles;
+    }
+
+    public void addRole(RoleType role) {
+        if (roles == null) {
+            roles = new HashSet<>();
+        }
+        boolean exists = roles.stream().anyMatch(r -> r.getRole() == role);
+        if (!exists) {
+            UserRole userRole = new UserRole(this, role);
+            roles.add(userRole);
+        }
     }
 
     public String getPhone() {
@@ -130,14 +159,6 @@ public class User {
         this.cropTypes = cropTypes;
     }
 
-    public String getProfilePhoto() {
-        return profilePhoto;
-    }
-
-    public void setProfilePhoto(String profilePhoto) {
-        this.profilePhoto = profilePhoto;
-    }
-
     public String getBusinessName() {
         return businessName;
     }
@@ -152,5 +173,21 @@ public class User {
 
     public void setBusinessType(String businessType) {
         this.businessType = businessType;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
+    }
+
+    public String getProfilePhoto() {
+        return profilePhoto;
+    }
+
+    public void setProfilePhoto(String profilePhoto) {
+        this.profilePhoto = profilePhoto;
     }
 }

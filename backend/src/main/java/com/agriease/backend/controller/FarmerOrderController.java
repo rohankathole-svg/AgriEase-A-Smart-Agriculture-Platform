@@ -145,4 +145,31 @@ public class FarmerOrderController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @DeleteMapping("/orders/{id}")
+    public ResponseEntity<?> deleteOrder(@PathVariable Long id, Authentication auth) {
+        try {
+            System.out.println("Delete order request received for order ID: " + id);
+            System.out.println("User: " + auth.getName());
+            orderService.deleteFarmerOrder(id, auth.getName());
+            System.out.println("Order deleted successfully");
+            return ResponseEntity.ok(Map.of("status", "success", "message", "Order deleted successfully"));
+        } catch (Exception e) {
+            System.err.println("Delete order error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/orders/resequence")
+    public ResponseEntity<?> resequenceMyOrders(Authentication auth) {
+        try {
+            User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+            orderService.resequenceDisplayOrderNumbers(user);
+            return ResponseEntity.ok(Map.of("status", "success", "message", "Orders resequenced successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

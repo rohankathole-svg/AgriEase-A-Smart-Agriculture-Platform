@@ -6,10 +6,16 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   console.log("API Request:", config.method.toUpperCase(), config.url);
-  
-  // Do not add Authorization header for auth endpoints
-  if (config.url && config.url.includes('/auth')) {
-    console.log("Skipping auth header for auth endpoint");
+
+  const url = config.url || "";
+  const isPublicAuthEndpoint =
+    url.includes("/auth/login") ||
+    url.includes("/auth/register") ||
+    url.includes("/api/auth/login") ||
+    url.includes("/api/auth/register");
+
+  if (isPublicAuthEndpoint) {
+    console.log("Skipping auth header for public auth endpoint");
     return config;
   }
 
@@ -43,13 +49,13 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.error("401 Unauthorized:", error.response?.data);
-      
+
       // Only auto-logout on authentication endpoints getting 401
       // For other endpoints, let the component handle it
-      const isAuthEndpoint = error.config?.url?.includes('/auth/');
+      const isAuthEndpoint = error.config?.url?.includes("/auth/");
       const currentPath = window.location.pathname;
-      
-      if (!isAuthEndpoint && !currentPath.includes('/login') && !currentPath.includes('/register')) {
+
+      if (!isAuthEndpoint && !currentPath.includes("/login") && !currentPath.includes("/register")) {
         // Check if token exists and seems valid
         const stored = localStorage.getItem("user");
         if (!stored) {
