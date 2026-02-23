@@ -40,7 +40,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                             "/auth/login", "/auth/register",
-                            "/agriease/auth/login", "/agriease/auth/register"
+                            "/api/auth/login", "/api/auth/register",
+                            "/agriease/auth/login", "/agriease/auth/register",
+                            "/agriease/api/auth/login", "/agriease/api/auth/register"
                         ).permitAll()
                         .requestMatchers("/error", "/agriease/error").permitAll()
                         .requestMatchers("/public/**", "/agriease/public/**").permitAll()
