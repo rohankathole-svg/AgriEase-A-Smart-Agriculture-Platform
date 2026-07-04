@@ -1,18 +1,17 @@
-# 🌱 AgriEase – AI-Powered Smart Agriculture Platform
-
 <div align="center">
 
-### 🚜 Empowering Farmers with Smart Technology
+# 🌱 AgriEase
+### AI-Powered Smart Agriculture Platform
 
-*A Full-Stack Smart Agriculture Platform that combines AI, Marketplace, Equipment Rental, Weather Insights, and Secure Authentication to simplify modern farming.*
+Empowering Farmers with Smart Technology through Artificial Intelligence, Full Stack Development, and Secure Digital Solutions.
 
-![Java](https://img.shields.io/badge/Java-17-red)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-green)
-![React](https://img.shields.io/badge/React-18-blue)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
-![JWT](https://img.shields.io/badge/JWT-Authentication-orange)
-![Flask](https://img.shields.io/badge/Flask-AI_Model-lightgrey)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+![Java](https://img.shields.io/badge/Java-17-red?style=for-the-badge&logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-green?style=for-the-badge&logo=springboot)
+![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue?style=for-the-badge&logo=postgresql)
+![JWT](https://img.shields.io/badge/JWT-Authentication-orange?style=for-the-badge)
+![Flask](https://img.shields.io/badge/Flask-AI-lightgrey?style=for-the-badge&logo=flask)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
 </div>
 
@@ -20,11 +19,18 @@
 
 # 📖 Overview
 
-AgriEase is a **Full-Stack Smart Agriculture Platform** designed to help farmers access essential agricultural services through a single digital platform.
+AgriEase is a Full Stack Smart Agriculture Platform that integrates Artificial Intelligence with modern web technologies to simplify farming operations.
 
-The application combines **Spring Boot**, **React**, **PostgreSQL**, and **Artificial Intelligence** to provide secure authentication, an online agricultural marketplace, equipment rental, weather updates, crop disease diagnosis, and online payments.
+The platform enables farmers to:
 
-The goal of AgriEase is to bridge the gap between traditional farming practices and modern digital technology.
+- 🌾 Detect plant diseases using AI
+- 🛒 Buy and sell agricultural products
+- 🚜 Rent farming equipment
+- 🌦 Access real-time weather information
+- 💳 Make secure online payments
+- 🔐 Use role-based secure authentication
+
+Built using **React, Spring Boot, PostgreSQL, Flask AI, and JWT Authentication**, AgriEase aims to digitally transform agriculture with an intuitive and scalable platform.
 
 ---
 
@@ -33,28 +39,28 @@ The goal of AgriEase is to bridge the gap between traditional farming practices 
 Farmers often rely on multiple disconnected platforms for:
 
 - Crop disease diagnosis
-- Weather information
+- Weather updates
 - Equipment rental
-- Buying fertilizers & seeds
-- Selling agricultural products
+- Buying fertilizers and seeds
+- Selling crops
+- Order management
 
 AgriEase brings all these services together into one secure and user-friendly platform.
 
 ---
 
-# ✨ Features
+# ✨ Key Features
 
 ## 👨‍🌾 Farmer Module
 
 - Secure Registration & Login
 - JWT Authentication
-- Dashboard
+- Farmer Dashboard
 - Marketplace
 - Equipment Rental
 - Order Tracking
-- Crop Disease Detection
-- Weather Information
 - Profile Management
+- Weather Updates
 
 ---
 
@@ -64,44 +70,37 @@ AgriEase brings all these services together into one secure and user-friendly pl
 - Buy Fertilizers
 - Buy Agricultural Products
 - Shopping Cart
-- Order Management
-- Product Search & Filtering
+- Product Search
+- Category Filtering
+- Order History
 
 ---
 
 ## 🚜 Equipment Rental
 
 - Browse Equipment
-- Rent Agricultural Equipment
-- Rental Requests
-- Booking Management
+- Book Equipment
+- Rental Request Management
+- Equipment Availability
 
 ---
 
 ## 🤖 AI Plant Disease Detection
 
-- Upload Plant Image
+- Upload Plant Images
 - CNN-Based Disease Prediction
 - Disease Information
-- Suggested Treatment
+- Suggested Treatments
 - Flask AI Integration
 
 ---
 
-## 🌦 Weather Information
+## 💳 Payment System
 
-- Real-time Weather Updates
-- Temperature
-- Humidity
-- Farming Insights
-
----
-
-## 💳 Payment Module
-
-- Razorpay Payment Gateway
-- Secure Online Payments
+- Razorpay Integration
+- Secure Payments
 - Order Confirmation
+- Payment Tracking
 
 ---
 
@@ -116,18 +115,20 @@ AgriEase brings all these services together into one secure and user-friendly pl
 
 # 🏗 System Architecture
 
-```
-                React Frontend
-                      │
-                REST API Calls
-                      │
-          Spring Boot Backend
-                      │
-       JWT Authentication Layer
-                      │
-      PostgreSQL Database
-                      │
-          Flask AI Service
+```text
+                 React Frontend
+                       │
+                 REST API Calls
+                       │
+             Spring Boot Backend
+                       │
+          JWT Authentication Layer
+                       │
+             PostgreSQL Database
+                       │
+          Flask AI Prediction Model
+                       │
+            Disease Prediction Result
 ```
 
 ---
@@ -159,17 +160,17 @@ AgriEase brings all these services together into one secure and user-friendly pl
 
 ---
 
-## Authentication
-
-- JWT Authentication
-
----
-
 ## AI Module
 
 - Python
 - Flask
 - CNN Model
+
+---
+
+## Authentication
+
+- JWT Authentication
 
 ---
 
@@ -179,7 +180,7 @@ AgriEase brings all these services together into one secure and user-friendly pl
 
 ---
 
-## Tools & Technologies
+## Tools
 
 - Git
 - GitHub
@@ -191,23 +192,183 @@ AgriEase brings all these services together into one secure and user-friendly pl
 
 # 📂 Project Structure
 
-```
+```text
 AgriEase/
 │
 ├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── package.json
 │
 ├── backend/
+│   ├── src/
+│   ├── pom.xml
+│   └── application.properties
 │
 ├── flask-ai/
+│   ├── app.py
+│   ├── model/
+│   └── requirements.txt
 │
 ├── database/
+│   └── schema.sql
 │
 ├── screenshots/
+│   ├── banner.png
+│   ├── login.png
+│   ├── dashboard.png
+│   ├── marketplace.png
+│   ├── disease-detection.png
+│   ├── equipment.png
+│   ├── payment.png
+│   └── profile.png
 │
-├── docs/
-│
-└── README.md
+├── README.md
+├── LICENSE
+└── .gitignore
 ```
+
+---
+
+# 📷 Application Screenshots
+
+## 🌟 Project Banner
+
+<p align="center">
+<img src="screenshots/landingpage.png" width="100%">
+</p>
+
+---
+
+## 🔐 Login Page
+
+<p align="center">
+<img src="screenshots/login.png" width="900">
+</p>
+
+---
+
+## 🏠 Home Page
+
+<p align="center">
+<img src="screenshots/home.png" width="900">
+</p>
+
+---
+
+## 📊 Farmer Dashboard
+
+<p align="center">
+<img src="screenshots/dashboard.png" width="900">
+</p>
+
+---
+
+## 🛒 Marketplace
+
+<p align="center">
+<img src="screenshots/marketplace.png" width="900">
+</p>
+
+---
+
+## 🚜 Equipment Rental
+
+<p align="center">
+<img src="screenshots/equipment.png" width="900">
+</p>
+
+---
+
+## 🤖 AI Disease Detection
+
+<p align="center">
+<img src="screenshots/disease-detection.png" width="900">
+</p>
+
+---
+
+## 💳 Payment Gateway
+
+<p align="center">
+<img src="screenshots/payment.png" width="900">
+</p>
+
+---
+
+## 👤 User Profile
+
+<p align="center">
+<img src="screenshots/profile.png" width="900">
+</p>
+
+---
+
+# 🔄 Application Workflow
+
+```text
+User
+   │
+   ▼
+React Frontend
+   │
+REST API Requests
+   │
+Spring Boot Backend
+   │
+JWT Authentication
+   │
+PostgreSQL Database
+   │
+Flask AI Model
+   │
+Prediction Result
+```
+
+---
+
+# 🔌 API Modules
+
+### Authentication
+
+- POST /api/auth/register
+- POST /api/auth/login
+
+### Marketplace
+
+- GET /api/products
+- POST /api/products
+- GET /api/categories
+
+### Orders
+
+- GET /api/orders
+- POST /api/orders
+
+### Equipment
+
+- GET /api/equipment
+- POST /api/equipment
+
+### AI Disease Detection
+
+- POST /predict
+
+---
+
+# 🗄 Database
+
+The PostgreSQL database stores:
+
+- Users
+- Roles
+- Products
+- Categories
+- Orders
+- Cart
+- Equipment
+- Payments
+- Disease Predictions
 
 ---
 
@@ -216,7 +377,7 @@ AgriEase/
 ## Clone Repository
 
 ```bash
-git clone https://github.com/rohankathole-svg/AgriEase-AI-Smart-Agriculture-Platform.git
+git clone https://github.com/rohankathole-svg/AgriEase-A-Smart-Agriculture-Platform.git
 ```
 
 ---
@@ -225,7 +386,7 @@ git clone https://github.com/rohankathole-svg/AgriEase-AI-Smart-Agriculture-Plat
 
 ```bash
 cd backend
-
+mvn clean install
 mvn spring-boot:run
 ```
 
@@ -235,9 +396,7 @@ mvn spring-boot:run
 
 ```bash
 cd frontend
-
 npm install
-
 npm run dev
 ```
 
@@ -247,9 +406,7 @@ npm run dev
 
 ```bash
 cd flask-ai
-
 pip install -r requirements.txt
-
 python app.py
 ```
 
@@ -257,7 +414,7 @@ python app.py
 
 # 🎯 Learning Outcomes
 
-This project helped strengthen my knowledge in:
+This project helped strengthen my skills in:
 
 - Full Stack Development
 - Spring Boot
@@ -269,55 +426,47 @@ This project helped strengthen my knowledge in:
 - AI Integration
 - Payment Gateway Integration
 - Git & GitHub
+- Software Architecture
 
 ---
 
-# 🔮 Future Enhancements
+# 🚀 Future Enhancements
 
-- Voice Assistant
-- Multi-language Support
+- Voice Assistant for Farmers
 - AI Crop Recommendation
 - Government Scheme Recommendation
-- IoT Sensor Integration
+- Live Market Prices
+- IoT Integration
 - Push Notifications
-- Farmer Community Forum
+- Multi-language Support
+- Mobile Application
 
 ---
 
-# 🤝 Contributing
+# 🤝 Contributors
 
-Contributions, suggestions, and feedback are always welcome.
+**Rohan Kathole**
 
-Feel free to fork this repository and submit pull requests.
+Software Engineer | Full Stack Developer
 
----
+GitHub: https://github.com/rohankathole-svg
 
-# 👨‍💻 Author
+LinkedIn: https://www.linkedin.com/in/rohan-kathole
 
-## Rohan Kathole
-
-**Software Engineer | Full Stack Developer**
-
-📧 Email: rohankathole07@gmail.com
-
-💼 LinkedIn:
-https://www.linkedin.com/in/rohan-kathole
-
-💻 GitHub:
-https://github.com/rohankathole-svg
+Email: rohankathole07@gmail.com
 
 ---
 
-# ⭐ Support
-
-If you found this project useful,
-
-⭐ **Please consider giving it a Star!**
-
-It helps motivate future development and improvements.
-
----
-
-## 📜 License
+# 📜 License
 
 This project is licensed under the **MIT License**.
+
+---
+
+<div align="center">
+
+### ⭐ If you found this project useful, please consider giving it a Star!
+
+Made with ❤️ by **Rohan Kathole**
+
+</div>
