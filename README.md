@@ -213,7 +213,9 @@ AgriEase/
 
 # 📷 Application Screenshots
 
-> *(Add screenshots here)*
+## Landing Page
+
+<img src="C:\Users\Roshan\OneDrive\Pictures\Screenshots\Screenshot 2026-07-04 145717.png"/>
 
 ### Login
 
