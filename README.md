@@ -215,7 +215,7 @@ AgriEase/
 
 ## Landing Page
 
-<img src="C:\Users\Roshan\OneDrive\Pictures\Screenshots\Screenshot 2026-07-04 145717.png"/>
+<img src="C:/Users/Roshan/OneDrive/Pictures/Screenshots/Screenshot 2026-07-04 145717.png"/>
 
 ### Login
 
