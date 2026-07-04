@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "../../auth/AuthContext";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import api from "../../api/axios";
 import { toast } from "react-toastify";
 import { useLanguage } from "../../context/LanguageContext";
@@ -9,30 +11,26 @@ export default function Profile() {
   const { user, login } = useAuth();
   const { t, language } = useLanguage();
   const locale = language === "mr" ? "mr-IN" : "en-IN";
+  const memberSinceDate = user?.createdAt ? new Date(user.createdAt) : null;
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
+  const getInitialFormData = (profileUser = user) => ({
+    name: profileUser?.name || "",
+    email: profileUser?.email || "",
+    phone: profileUser?.phone || "",
+    address: profileUser?.address || "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+  const [formData, setFormData] = useState(() => getInitialFormData());
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    }
-  }, [user]);
+  const resetFormFromUser = (profileUser = user) =>
+    setFormData((prev) => ({
+      ...getInitialFormData(profileUser),
+      currentPassword: prev.currentPassword,
+      newPassword: prev.newPassword,
+      confirmPassword: prev.confirmPassword,
+    }));
 
   const handleChange = (e) => {
     setFormData({
@@ -53,13 +51,14 @@ export default function Profile() {
       };
 
       const response = await api.put("/farmer/profile", updateData);
-      
+
       // Update local storage and context
       const updatedUser = {
         ...user,
         ...response.data,
       };
       login(updatedUser);
+      resetFormFromUser(updatedUser);
 
       toast.success(t("messages.profileUpdated"));
       setIsEditing(false);
@@ -101,14 +100,31 @@ export default function Profile() {
     }
   };
 
-  return (
-    <div>
-      <h2 className="dash-title">{t("farmer.account.title")}</h2>
-      <p className="dash-subtitle">{t("farmer.account.subtitle")}</p>
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
 
-      <div className="profile-container">
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  return (
+    <motion.div initial="hidden" animate="show" variants={staggerContainer}>
+      <BackButton />
+      <motion.div
+        className="page-hero"
+        style={{ backgroundImage: "url('/images/account.jpg')" }}
+        variants={fadeUp}
+      >
+        <h1>{t("farmer.account.title")}</h1>
+        <p>{t("farmer.account.subtitle")}</p>
+      </motion.div>
+
+      <motion.div className="profile-container" variants={staggerContainer}>
         {/* Profile Information Card */}
-        <div className="profile-card">
+        <motion.div className="profile-card" variants={fadeUp}>
           <div className="profile-header">
             <div className="profile-avatar">
               {user?.name?.charAt(0).toUpperCase() || "F"}
@@ -155,7 +171,7 @@ export default function Profile() {
                 onChange={handleChange}
                 disabled={!isEditing}
                 className="input"
-                placeholder="Enter phone number"
+                placeholder={t("farmer.profile.placeholders.phone")}
               />
             </div>
 
@@ -168,7 +184,7 @@ export default function Profile() {
                 disabled={!isEditing}
                 className="input"
                 rows="3"
-                placeholder="Enter your address"
+                placeholder={t("farmer.profile.placeholders.address")}
               />
             </div>
 
@@ -191,14 +207,7 @@ export default function Profile() {
                     className="btn secondary square"
                     onClick={() => {
                       setIsEditing(false);
-                      // Reset form
-                      setFormData({
-                        ...formData,
-                        name: user.name || "",
-                        email: user.email || "",
-                        phone: user.phone || "",
-                        address: user.address || "",
-                      });
+                      resetFormFromUser();
                     }}
                   >
                     {t("common.actions.cancel")}
@@ -207,10 +216,10 @@ export default function Profile() {
               )}
             </div>
           </form>
-        </div>
+        </motion.div>
 
         {/* Change Password Card */}
-        <div className="profile-card">
+        <motion.div className="profile-card" variants={fadeUp}>
           <h3>{t("common.labels.changePassword")}</h3>
           <form onSubmit={handleChangePassword} className="profile-form">
             <div className="form-group">
@@ -221,7 +230,7 @@ export default function Profile() {
                 value={formData.currentPassword}
                 onChange={handleChange}
                 className="input"
-                placeholder="Enter current password"
+                placeholder={t("common.labels.currentPassword")}
                 required
               />
             </div>
@@ -234,7 +243,7 @@ export default function Profile() {
                 value={formData.newPassword}
                 onChange={handleChange}
                 className="input"
-                placeholder="Enter new password"
+                placeholder={t("common.labels.newPassword")}
                 minLength="6"
                 required
               />
@@ -248,7 +257,7 @@ export default function Profile() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 className="input"
-                placeholder="Confirm new password"
+                placeholder={t("common.labels.confirmPassword")}
                 minLength="6"
                 required
               />
@@ -258,10 +267,10 @@ export default function Profile() {
               {t("common.actions.saveChanges")}
             </Button>
           </form>
-        </div>
+        </motion.div>
 
         {/* Account Info Card */}
-        <div className="profile-card">
+        <motion.div className="profile-card" variants={fadeUp}>
           <h3>{t("common.labels.accountInformation")}</h3>
           <div className="info-list">
             <div className="info-item">
@@ -271,7 +280,7 @@ export default function Profile() {
             <div className="info-item">
               <span className="info-label">{t("common.labels.memberSince")}:</span>
               <span className="info-value">
-                {new Date(user?.createdAt || Date.now()).toLocaleDateString(locale)}
+                {memberSinceDate ? memberSinceDate.toLocaleDateString(locale) : "N/A"}
               </span>
             </div>
             <div className="info-item">
@@ -279,8 +288,8 @@ export default function Profile() {
               <span className="info-value">#{user?.id || "N/A"}</span>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }

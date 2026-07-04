@@ -6,6 +6,7 @@ import com.agriease.backend.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,10 +57,16 @@ public class OrderService {
         order.setShippingAddress(request.getShippingAddress());
         order.setPaymentMethod(request.getPaymentMethod());
         order.setTotalAmount(request.getTotalAmount());
+        order.setOrderDate(LocalDateTime.now());
 
         Long supplierId = resolveAndValidateSupplierId(request);
         User supplier = userRepository.findById(supplierId)
                 .orElseThrow(() -> new RuntimeException("Supplier not found"));
+        order.setSupplier(supplier);
+
+        if (request.getShippingAddress() != null) {
+            order.setDeliveryAddress(buildDeliveryAddress(request.getShippingAddress()));
+        }
 
         // Create order items
         List<OrderItem> orderItems = new ArrayList<>();
@@ -143,6 +150,9 @@ public class OrderService {
                 .anyMatch(item -> item.getSupplier() != null && item.getSupplier().getId().equals(supplier.getId()));
         if (!supplierOwnsOrder) {
             throw new RuntimeException("Order not found");
+        }
+        if ("CONFIRMED".equalsIgnoreCase(status)) {
+            throw new RuntimeException("Use /api/orders/{orderId}/confirm to confirm and assign delivery agent");
         }
         order.setStatus(status);
         orderRepository.save(order);
@@ -348,6 +358,23 @@ public class OrderService {
                     .orElse(null);
         }
         return null;
+    }
+
+    private String buildDeliveryAddress(ShippingAddress shippingAddress) {
+        List<String> addressParts = new ArrayList<>();
+        if (shippingAddress.getAddress() != null && !shippingAddress.getAddress().isBlank()) {
+            addressParts.add(shippingAddress.getAddress().trim());
+        }
+        if (shippingAddress.getCity() != null && !shippingAddress.getCity().isBlank()) {
+            addressParts.add(shippingAddress.getCity().trim());
+        }
+        if (shippingAddress.getState() != null && !shippingAddress.getState().isBlank()) {
+            addressParts.add(shippingAddress.getState().trim());
+        }
+        if (shippingAddress.getPincode() != null && !shippingAddress.getPincode().isBlank()) {
+            addressParts.add(shippingAddress.getPincode().trim());
+        }
+        return String.join(", ", addressParts);
     }
 }
 

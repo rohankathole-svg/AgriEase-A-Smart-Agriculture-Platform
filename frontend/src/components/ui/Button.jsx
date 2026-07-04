@@ -8,8 +8,13 @@ export default function Button({
   loading = false,
   style = {},
   className = "",
+  ...props
 }) {
-  const classes = ["btn", className, loading ? "is-loading" : ""]
+  const classes = [
+    "btn", 
+    className, 
+    loading ? "is-loading" : ""
+  ]
     .filter(Boolean)
     .join(" ");
 
@@ -20,8 +25,14 @@ export default function Button({
       disabled={disabled || loading}
       style={style}
       className={classes}
+      {...props}
     >
-      {loading ? "Please wait..." : children}
+      {loading ? (
+        <span className="flex items-center gap-2">
+          <span className="spinner"></span>
+          Please wait...
+        </span>
+      ) : children}
     </button>
   );
 }

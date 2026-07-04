@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { getWeather } from "../services/weatherService";
 import Button from "./ui/Button";
 import { toast } from "react-toastify";
+import { getCurrentCoordinates } from "../utils/geolocation";
 
 function WeatherWidget() {
   const [city, setCity] = useState("Jalna");
   const [weather, setWeather] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [locationMeta, setLocationMeta] = useState("");
 
   const fetchWeather = async (targetCity = city) => {
     try {
@@ -19,10 +22,21 @@ function WeatherWidget() {
       setLastUpdated(new Date());
       setCity(data?.location?.name || targetCity);
     } catch (err) {
-      console.error(err);
-      setError("Unable to fetch weather data");
+      const errorMessage = err.message || "Unable to fetch weather data";
+      console.error("Weather fetch error:", err);
+      setError(errorMessage);
       setWeather(null);
-      toast.error("Unable to fetch weather data");
+      
+      // Show appropriate toast based on error type
+      if (errorMessage.includes("API key")) {
+        toast.error("Weather API not configured. Check backend setup.");
+      } else if (errorMessage.includes("location")) {
+        toast.error(`City not found: ${targetCity}`);
+      } else if (errorMessage.includes("Network")) {
+        toast.error("Network error. Check internet connection.");
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -32,6 +46,37 @@ function WeatherWidget() {
     fetchWeather("Jalna");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const fetchByCurrentLocation = () => {
+    setIsLocating(true);
+    getCurrentCoordinates({ fastMode: true })
+      .then(async ({ latitude, longitude, accuracy }) => {
+        const query = `${latitude},${longitude}`;
+        setLocationMeta(`GPS accuracy: ${Math.round(accuracy)} m`);
+        await fetchWeather(query);
+      })
+      .catch(async (geoError) => {
+        console.error("Geolocation error", geoError);
+        const errorMsg = geoError.message || "Geolocation failed";
+        
+        // Only fallback to auto:ip if it's a permission issue, not a security issue
+        if (errorMsg.includes("permission denied") || errorMsg.includes("unavailable")) {
+          toast.warn(`${errorMsg}. Using network-based location instead.`);
+          setLocationMeta("Network-based location");
+          try {
+            await fetchWeather("auto:ip");
+          } catch (autoIpError) {
+            console.error("Auto IP location failed:", autoIpError);
+            toast.error("Could not determine location. Try entering city manually.");
+          }
+        } else {
+          toast.error(errorMsg);
+        }
+      })
+      .finally(() => {
+        setIsLocating(false);
+      });
+  };
 
   const highlights = useMemo(() => {
     if (!weather?.current) {
@@ -67,6 +112,7 @@ function WeatherWidget() {
           {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "No data yet"}
         </span>
       </header>
+      {locationMeta && <p className="weather-widget__updated">{locationMeta}</p>}
 
       <div className="weather-widget__search">
         <input
@@ -78,6 +124,9 @@ function WeatherWidget() {
         <Button onClick={() => fetchWeather(city)} className="btn primary" disabled={isLoading}>
           {isLoading ? "Checking..." : "Update"}
         </Button>
+        <Button onClick={fetchByCurrentLocation} className="btn ghost" disabled={isLocating || isLoading}>
+          {isLocating ? "Locating..." : "Use Current Location"}
+        </Button>
       </div>
 
       {error && <p className="inline-error">{error}</p>}
@@ -88,7 +137,7 @@ function WeatherWidget() {
             {conditionIcon ? (
               <img
                 src={conditionIcon}
-                alt={weather.current.condition.text}
+                alt={weather.current.condition?.text || "weather condition"}
                 className="weather-icon"
                 width={64}
                 height={64}
@@ -100,7 +149,7 @@ function WeatherWidget() {
             )}
             <div className="weather-current-details">
               <p className="weather-temp">{weather.current.temp_c}°C</p>
-              <p className="weather-condition">{weather.current.condition.text}</p>
+              <p className="weather-condition">{weather.current.condition?.text || "Unknown"}</p>
               <p className="weather-meta">Visibility {weather.current.vis_km} km</p>
             </div>
           </div>

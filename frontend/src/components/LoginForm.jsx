@@ -79,7 +79,13 @@ export default function LoginForm({ onSwitchToRegister }) {
 
       const role =
         data?.role || (Array.isArray(data?.roles) && data.roles.length ? data.roles[0] : "FARMER");
-      navigate(role === "SUPPLIER" ? "/supplier" : "/farmer");
+      const redirectPath =
+        role === "SUPPLIER"
+          ? "/supplier"
+          : role === "DELIVERY_AGENT"
+            ? "/agent-dashboard"
+            : "/farmer";
+      navigate(redirectPath);
     } catch (error) {
       setStatus({ type: "error", text: getErrorMessage(error) });
     } finally {

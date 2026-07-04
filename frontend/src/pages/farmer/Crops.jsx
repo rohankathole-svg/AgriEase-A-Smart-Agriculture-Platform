@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import { useCart } from "../../context/CartContext";
 import api from "../../api/axios";
 import { getSafeImageUrl, onImageError } from "../../utils/imageUtils";
@@ -35,16 +37,38 @@ function Crops() {
     loadCrops();
   }, []);
 
-  return (
-    <div>
-      <h2 className="dash-title">{t("farmer.crops.title")}</h2>
-      <p className="dash-subtitle">{t("farmer.crops.subtitle")}</p>
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
 
-      <div className="product-grid">
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  return (
+    <motion.div initial="hidden" animate="show" variants={staggerContainer}>
+      <BackButton />
+      <motion.div
+        className="page-hero"
+        style={{ backgroundImage: "url('/images/crops.jpg')" }}
+        variants={fadeUp}
+      >
+        <h1>{t("farmer.crops.title")}</h1>
+        <p>{t("farmer.crops.subtitle")}</p>
+      </motion.div>
+
+      <motion.div className="product-grid" variants={staggerContainer}>
         {crops.length === 0 && <p>{t("farmer.crops.empty")}</p>}
 
         {crops.map((p) => (
-          <div key={p.id} className="product-card reveal">
+          <motion.div
+            key={p.id}
+            className="product-card"
+            variants={fadeUp}
+            whileHover={{ scale: 1.02, y: -4 }}
+          >
             <img
               src={getSafeImageUrl(p.imageUrl, "crop")}
               alt={p.name}
@@ -61,10 +85,10 @@ function Crops() {
             <Button className="btn primary square" onClick={() => addCrop(p)}>
               {t("common.actions.addToCart")}
             </Button>
-          </div>
+          </motion.div>
         ))}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

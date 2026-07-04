@@ -3,6 +3,7 @@ package com.agriease.backend.entity;
 public enum RoleType {
     FARMER,
     SUPPLIER,
+    DELIVERY_AGENT,
     CUSTOMER;
 
     public RoleType canonical() {

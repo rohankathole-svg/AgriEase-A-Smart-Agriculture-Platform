@@ -1,5 +1,7 @@
 import { useCart } from "../../context/CartContext";
+import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import { useNavigate } from "react-router-dom";
 import { getSafeImageUrl, onImageError } from "../../utils/imageUtils";
 import { useLanguage } from "../../context/LanguageContext";
@@ -11,7 +13,6 @@ export default function Cart() {
     removeItem,
     clearCart,
     getCartTotal,
-    checkout,
   } = useCart();
 
   const navigate = useNavigate();
@@ -24,64 +25,93 @@ export default function Cart() {
     navigate("/farmer/checkout");
   };
 
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
   if (cartItems.length === 0) {
     return (
-      <div>
-        <h2 className="dash-title">{t("common.labels.shoppingCart")}</h2>
-        <p className="dash-subtitle">{t("common.labels.cartEmpty")}</p>
-        <div style={{ marginTop: "2rem" }}>
+      <motion.div initial="hidden" animate="show" variants={staggerContainer} style={{ textAlign: "center", padding: "40px", marginBottom: "40px" }}>
+        <BackButton />
+        <motion.div
+          className="page-hero"
+          style={{ backgroundImage: "url('/images/cart.jpg')" }}
+          variants={fadeUp}
+        >
+          <h1>{t("common.labels.shoppingCart")}</h1>
+          <p>{t("common.labels.cartEmpty")}</p>
+        </motion.div>
+
+        <motion.div style={{ marginTop: "2rem" }} variants={fadeUp}>
           <Button
             className="btn primary square"
             onClick={() => navigate("/farmer/market")}
           >
             {t("common.actions.browseMarket")}
           </Button>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     );
   }
 
   return (
-    <div>
-      <h2 className="dash-title">{t("common.labels.shoppingCart")}</h2>
-      <p className="dash-subtitle">{t("common.labels.cartSubtitle")}</p>
+    <motion.div className="secondary-page" initial="hidden" animate="show" variants={staggerContainer}>
+      <BackButton />
+      <motion.div
+        className="page-hero"
+        style={{ backgroundImage: "url('/images/cart.jpg')" }}
+        variants={fadeUp}
+      >
+        <h1>{t("common.labels.shoppingCart")}</h1>
+        <p>{t("common.labels.cartSubtitle")}</p>
+      </motion.div>
 
-      <div className="cart-container">
-        <div className="cart-items-section">
-          {cartItems.map((item) => (
-            <div key={`${item.type}-${item.id}`} className="cart-item-card">
-              <img
-                src={getSafeImageUrl(
-                  item.imageUrl,
-                  item.type === "tool" ? "equipment" : "product"
-                )}
-                alt={item.name}
-                className="cart-item-image"
-                loading="lazy"
-                onError={onImageError(item.type === "tool" ? "equipment" : "product")}
-              />
+      <motion.div className="cart-container" variants={staggerContainer}>
+        <motion.div className="cart-items-section" variants={staggerContainer}>
+          {cartItems.map((item, index) => (
+            <motion.div
+              key={`${item.type}-${item.id}`}
+              className="cart-item-card cart-item-card--premium"
+              variants={fadeUp}
+              whileHover={{ scale: 1.01, x: 4, boxShadow: "0 12px 32px rgba(21, 128, 61, 0.15)" }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <div className="cart-item__image-wrapper">
+                <img
+                  src={getSafeImageUrl(
+                    item.imageUrl,
+                    item.type === "tool" ? "equipment" : "product"
+                  )}
+                  alt={item.name}
+                  className="cart-item-image"
+                  loading="lazy"
+                  onError={onImageError(item.type === "tool" ? "equipment" : "product")}
+                />
+              </div>
 
               <div className="cart-item-details">
-                <h4>{item.name}</h4>
-                <span className="cart-item-type">
-                  {item.type === "product"
-                    ? t("common.labels.product")
-                    : item.type === "crop"
-                    ? t("common.labels.crop")
-                    : t("common.labels.equipmentRental")}
-                </span>
+                <div className="cart-item__header">
+                  <h4 className="cart-item__title">{item.name}</h4>
+                  <span className="cart-item-type">
+                    {item.type === "product"
+                      ? t("common.labels.product")
+                      : item.type === "crop"
+                        ? t("common.labels.crop")
+                        : t("common.labels.equipmentRental")}
+                  </span>
+                </div>
 
                 {item.type === "tool" ? (
                   <div className="cart-tool-info">
-                    <p>
-                      <strong>{t("common.labels.rate")}:</strong> INR {item.dailyRate} / day
-                    </p>
-                    <p>
-                      <strong>{t("common.labels.duration")}:</strong> {item.days} days
-                    </p>
-                    <p>
-                      <strong>{t("common.labels.dates")}:</strong> {item.startDate} to {item.endDate}
-                    </p>
+                    <p className="tool-info__item"><strong>{t("common.labels.rate")}:</strong> <span className="tool-info__value">INR {item.dailyRate} / day</span></p>
+                    <p className="tool-info__item"><strong>{t("common.labels.duration")}:</strong> <span className="tool-info__value">{item.days} days</span></p>
+                    <p className="tool-info__item"><strong>{t("common.labels.dates")}:</strong> <span className="tool-info__value">{item.startDate} → {item.endDate}</span></p>
                   </div>
                 ) : (
                   <div className="cart-quantity-controls">
@@ -90,6 +120,7 @@ export default function Cart() {
                         updateQuantity(item.id, item.type, item.quantity - 1)
                       }
                       className="quantity-btn"
+                      aria-label={t("common.accessibility.decreaseQuantity")}
                     >
                       −
                     </button>
@@ -99,6 +130,7 @@ export default function Cart() {
                         updateQuantity(item.id, item.type, item.quantity + 1)
                       }
                       className="quantity-btn"
+                      aria-label={t("common.accessibility.increaseQuantity")}
                     >
                       +
                     </button>
@@ -113,57 +145,55 @@ export default function Cart() {
                     ? item.totalPrice
                     : item.price * item.quantity}
                 </p>
-                <button
+                <motion.button
                   onClick={() => removeItem(item.id, item.type)}
                   className="remove-btn"
+                  whileHover={{ backgroundColor: "rgba(180, 35, 24, 0.1)" }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   {t("common.actions.remove")}
-                </button>
+                </motion.button>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="cart-summary">
-          <h3>{t("common.labels.orderSummary")}</h3>
-          <div className="summary-line">
-            <span>{t("common.labels.totalItems")}:</span>
-            <span>{cartItems.length}</span>
+        <motion.div className="cart-summary cart-summary--premium" variants={fadeUp}>
+          <h3 className="cart-summary__title">{t("common.labels.orderSummary")}</h3>
+          
+          <div className="summary-line summary-line--header">
+            <span className="summary-label">{t("common.labels.totalItems")}</span>
+            <span className="summary-value">{cartItems.length} {t("common.labels.items")}</span>
           </div>
 
           <div className="summary-breakdown">
             {cartItems.map((item) => (
-              <div key={`${item.type}-${item.id}`} className="summary-item">
-                <span>
+              <motion.div key={`${item.type}-${item.id}`} className="summary-item" layout>
+                <span className="summary-item__name">
                   {item.name}{" "}
-                  {item.type !== "tool" && `x${item.quantity}`}
+                  {item.type !== "tool" && <span className="summary-item__qty">×{item.quantity}</span>}
                 </span>
-                <span>
-                  INR{" "}
-                  {item.type === "tool"
+                <span className="summary-item__price">
+                  INR {item.type === "tool"
                     ? item.totalPrice
-                    : item.price * item.quantity}
+                    : (item.price * item.quantity).toFixed(2)}
                 </span>
-              </div>
+              </motion.div>
             ))}
           </div>
 
-          <hr />
+          <div className="summary-divider"></div>
 
           <div className="summary-total">
-            <span>
-              <strong>{t("common.labels.total")}:</strong>
-            </span>
-            <span>
-              <strong>INR {getCartTotal().toFixed(2)}</strong>
-            </span>
+            <span className="summary-total__label">{t("common.labels.total")}</span>
+            <span className="summary-total__value">INR {getCartTotal().toFixed(2)}</span>
           </div>
 
           <div className="cart-actions">
             <Button
               className="btn primary square"
               onClick={handleCheckout}
-              style={{ width: "100%", marginBottom: "1rem" }}
+              style={{ width: "100%", marginBottom: "0.75rem" }}
             >
               {t("common.actions.checkout")}
             </Button>
@@ -175,8 +205,8 @@ export default function Cart() {
               {t("common.actions.clearCart")}
             </Button>
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }

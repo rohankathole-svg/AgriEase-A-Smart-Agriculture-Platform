@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "../../auth/AuthContext";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import { useLanguage } from "../../context/LanguageContext";
@@ -93,7 +95,7 @@ export default function FarmerProfile() {
     } finally {
       setStatsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadAccountStats();
@@ -200,7 +202,7 @@ export default function FarmerProfile() {
 
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm(
-      "Delete your account permanently? This will remove your profile and related data. This action cannot be undone."
+      t("farmer.profile.deleteConfirm")
     );
     if (!confirmed) return;
 
@@ -215,35 +217,51 @@ export default function FarmerProfile() {
           throw error;
         }
       }
-      toast.success("Account deleted successfully");
+      toast.success(t("supplier.profile.accountDeleted"));
       logout();
     } catch (error) {
       console.error("Delete account error:", error);
-      toast.error(error?.response?.data?.message || "Failed to delete account");
+      toast.error(error?.response?.data?.message || t("supplier.profile.deleteAccountFailed"));
     } finally {
       setDeletingAccount(false);
     }
   };
 
-  return (
-    <div>
-      <h2 className="dash-title">{t("farmer.profile.title")}</h2>
-      <p className="dash-subtitle">{t("farmer.profile.subtitle")}</p>
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
 
-      <div className="profile-container">
-        <div className="profile-card">
-          <div className="profile-header">
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  return (
+    <motion.div className="secondary-page" initial="hidden" animate="show" variants={staggerContainer}>
+      <BackButton />
+      <motion.div 
+        className="page-hero page-hero--profile" 
+        style={{ backgroundImage: "url('/images/profile.jpg')" }}
+        variants={fadeUp}
+      >
+        <h1>{t("farmer.profile.title")}</h1>
+        <p>{t("farmer.profile.subtitle")}</p>
+      </motion.div>
+
+      <motion.div className="profile-container profile-container--premium" variants={staggerContainer}>
+        <motion.div className="profile-card profile-card--premium" variants={fadeUp}>
+          <div className="profile-header profile-header--enhanced">
             <div className="profile-avatar-section">
-              <div className="profile-avatar">
+              <div className="profile-avatar profile-avatar--farmer">
                 {photoPreview ? (
-                  <img src={photoPreview} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  <img src={photoPreview} alt={t("farmer.profile.title")} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                 ) : (
                   user?.name?.charAt(0).toUpperCase() || "F"
                 )}
               </div>
-              {console.log("FarmerProfile - isEditing:", isEditing)}
               {isEditing && (
-                <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <input
                     type="file"
                     accept="image/*"
@@ -253,7 +271,7 @@ export default function FarmerProfile() {
                     disabled={uploadingPhoto}
                   />
                   <label 
-                    htmlFor="farmer-photo-upload" 
+                    htmlFor="farmer-photo-upload"
                     style={{ cursor: uploadingPhoto ? 'not-allowed' : 'pointer' }}
                   >
                     <span 
@@ -266,7 +284,8 @@ export default function FarmerProfile() {
                         backgroundColor: '#4CAF50',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '4px'
+                        borderRadius: '8px',
+                        fontWeight: '600'
                       }}
                     >
                       {uploadingPhoto ? t("messages.uploadingImage") : `📷 ${t("farmer.profile.changePhoto")}`}
@@ -283,7 +302,9 @@ export default function FarmerProfile() {
                         backgroundColor: '#f44336',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '4px'
+                        borderRadius: '8px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
                       }}
                     >
                       ✕ {t("farmer.profile.removePhoto")}
@@ -291,128 +312,151 @@ export default function FarmerProfile() {
                   )}
                 </div>
               )}
-              {!isEditing && (
-                <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-                  {t("farmer.profile.avatarHint")}
-                </div>
-              )}
             </div>
-            <div>
-              <h3>{formData.name || user?.name || "Farmer"}</h3>
-              <span className="profile-role">{t("farmer.profile.role")}</span>
-              {formData.phone && <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>📞 {formData.phone}</p>}
+            <div className="profile-header__info">
+              <h3 className="profile-header__name">{formData.name || user?.name || t("common.farmer")}</h3>
+              <span className="profile-role profile-role--farmer">{t("farmer.profile.role")}</span>
+              {formData.phone && <p className="profile-header__contact">📞 {formData.phone}</p>}
+              {formData.email && <p className="profile-header__email">✉️ {formData.email}</p>}
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="profile-form">
-            <div className="form-group">
-              <label>{t("common.labels.fullName")}</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                required
-              />
+          <div className="profile-divider"></div>
+
+          <form onSubmit={handleSubmit} className="profile-form profile-form--enhanced">
+            <div className="profile-form__section">
+              <h4 className="profile-form__section-title">{t("supplier.profile.personalInfo")}</h4>
+              <div className="profile-form__grid">
+                <div className="form-group form-group--enhanced">
+                  <label>{t("common.labels.fullName")}</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    required
+                  />
+                </div>
+
+                <div className="form-group form-group--enhanced">
+                  <label>{t("common.labels.email")}</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    required
+                  />
+                </div>
+
+                <div className="form-group form-group--enhanced">
+                  <label>{t("common.labels.phoneNumber")}</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    placeholder={t("farmer.profile.placeholders.phone")}
+                  />
+                </div>
+
+                <div className="form-group form-group--enhanced">
+                  <label>{t("common.labels.address")}</label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    rows="2"
+                    placeholder={t("farmer.profile.placeholders.address")}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>{t("common.labels.email")}</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                required
-              />
+            <div className="profile-form__divider"></div>
+
+            <div className="profile-form__section">
+              <h4 className="profile-form__section-title">{t("supplier.profile.businessDetails")}</h4>
+              <div className="profile-form__grid">
+                <div className="form-group form-group--enhanced">
+                  <label>{t("farmer.profile.form.farmSizeLabel")}</label>
+                  <input
+                    type="text"
+                    name="farmSize"
+                    value={formData.farmSize}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    placeholder={t("farmer.profile.placeholders.farmSize")}
+                  />
+                </div>
+
+                <div className="form-group form-group--enhanced">
+                  <label>{t("farmer.profile.form.cropTypesLabel")}</label>
+                  <input
+                    type="text"
+                    name="cropTypes"
+                    value={formData.cropTypes}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    placeholder={t("farmer.profile.placeholders.cropTypes")}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>{t("common.labels.phoneNumber")}</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                placeholder={t("farmer.profile.placeholders.phone")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t("common.labels.address")}</label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                rows="3"
-                placeholder={t("farmer.profile.placeholders.address")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t("farmer.profile.form.farmSizeLabel")}</label>
-              <input
-                type="text"
-                name="farmSize"
-                value={formData.farmSize}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                placeholder={t("farmer.profile.placeholders.farmSize")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t("farmer.profile.form.cropTypesLabel")}</label>
-              <input
-                type="text"
-                name="cropTypes"
-                value={formData.cropTypes}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                placeholder={t("farmer.profile.placeholders.cropTypes")}
-              />
-            </div>
-
-            <div className="profile-actions">
+            <div className="profile-actions profile-actions--enhanced">
               {!isEditing ? (
                 <>
-                  <Button
-                    type="button"
-                    className="btn primary square"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log("Edit Profile button clicked, entering edit mode");
-                      setIsEditing(true);
-                    }}
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    {t("common.actions.editProfile")}
-                  </Button>
-                  <Button
-                    type="button"
-                    className="btn secondary square"
-                    onClick={handleDeleteAccount}
-                    loading={deletingAccount}
-                    style={{ background: "#fee", color: "#b42318", border: "1px solid #fdd" }}
+                    <Button
+                      type="button"
+                      className="btn primary square"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsEditing(true);
+                      }}
+                    >
+                      {t("common.actions.editProfile")}
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    Delete Account
-                  </Button>
+                    <Button
+                      type="button"
+                      className="btn btn--danger-outline"
+                      onClick={handleDeleteAccount}
+                      loading={deletingAccount}
+                    >
+                      Delete Account
+                    </Button>
+                  </motion.div>
                 </>
               ) : (
                 <>
-                  <Button type="submit" className="btn primary square">
-                    {t("common.actions.saveChanges")}
-                  </Button>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button type="submit" className="btn primary square">
+                      {t("common.actions.saveChanges")}
+                    </Button>
+                  </motion.div>
                   <Button
                     type="button"
                     className="btn secondary square"
@@ -420,7 +464,6 @@ export default function FarmerProfile() {
                       e.preventDefault();
                       e.stopPropagation();
                       setIsEditing(false);
-                      // Reset form data
                       setFormData({
                         name: user.name || "",
                         email: user.email || "",
@@ -439,47 +482,55 @@ export default function FarmerProfile() {
               )}
             </div>
           </form>
-        </div>
+        </motion.div>
 
-        <div className="profile-stats">
-          <div className="profile-stats-header">
-            <h3>{t("farmer.profile.accountStatsTitle")}</h3>
-            <Button
+        <motion.div className="profile-stats profile-stats--premium" variants={fadeUp}>
+          <div className="profile-stats__header">
+            <h3 className="profile-stats__title">{t("farmer.profile.accountStatsTitle")}</h3>
+            <motion.button
               type="button"
-              className="btn ghost"
+              className="btn btn--icon"
               onClick={loadAccountStats}
-              loading={statsLoading}
+              disabled={statsLoading}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              {t("farmer.home.refresh")}
-            </Button>
+              🔄
+            </motion.button>
           </div>
-          {statsError && <p className="inline-error">{statsError}</p>}
-          <div className="stat-card">
-            <div className="stat-icon">🛒</div>
-            <div>
-              <h4>{t("farmer.profile.stats.totalOrders")}</h4>
-              <p className="stat-value">{statsLoading ? "--" : accountStats.totalOrders}</p>
-            </div>
+          
+          {statsError && <p className="profile-stats__error">{statsError}</p>}
+          
+          <div className="profile-stats__grid">
+            <motion.div className="stat-card stat-card--premium" variants={fadeUp}>
+              <div className="stat-card__icon">🛒</div>
+              <div className="stat-card__content">
+                <h4 className="stat-card__title">{t("farmer.profile.stats.totalOrders")}</h4>
+                <p className="stat-card__value">{statsLoading ? "--" : accountStats.totalOrders}</p>
+              </div>
+            </motion.div>
+
+            <motion.div className="stat-card stat-card--premium" variants={fadeUp}>
+              <div className="stat-card__icon">🚜</div>
+              <div className="stat-card__content">
+                <h4 className="stat-card__title">{t("farmer.profile.stats.equipmentBookings")}</h4>
+                <p className="stat-card__value">{statsLoading ? "--" : accountStats.equipmentBookings}</p>
+                <p className="stat-card__helper">
+                  {t("farmer.profile.stats.activeNow")}: {statsLoading ? "--" : accountStats.activeBookings}
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.div className="stat-card stat-card--premium" variants={fadeUp}>
+              <div className="stat-card__icon">🌱</div>
+              <div className="stat-card__content">
+                <h4 className="stat-card__title">{t("farmer.profile.stats.diseaseScans")}</h4>
+                <p className="stat-card__value">{statsLoading ? "--" : accountStats.diseaseScans}</p>
+              </div>
+            </motion.div>
           </div>
-          <div className="stat-card">
-            <div className="stat-icon">🚜</div>
-            <div>
-              <h4>{t("farmer.profile.stats.equipmentBookings")}</h4>
-              <p className="stat-value">{statsLoading ? "--" : accountStats.equipmentBookings}</p>
-              <p className="stat-helper">
-                {t("farmer.profile.stats.activeNow")}: {statsLoading ? "--" : accountStats.activeBookings}
-              </p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">🌱</div>
-            <div>
-              <h4>{t("farmer.profile.stats.diseaseScans")}</h4>
-              <p className="stat-value">{statsLoading ? "--" : accountStats.diseaseScans}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }

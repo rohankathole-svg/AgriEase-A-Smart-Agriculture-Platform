@@ -5,12 +5,15 @@ import App from "./App";
 import "react-toastify/dist/ReactToastify.css";
 import "./styles/theme.css";
 import { LanguageProvider } from "./context/LanguageContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <LanguageProvider>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </LanguageProvider>
+  <ThemeProvider>
+    <LanguageProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </LanguageProvider>
+  </ThemeProvider>
 );

@@ -1,39 +1,36 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import api from "../../api/axios";
 import { toast } from "react-toastify";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function Profile() {
   const { user, login } = useAuth();
+  const { t, language } = useLanguage();
+  const memberSinceDate = user?.createdAt ? new Date(user.createdAt) : null;
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    businessName: "",
-    description: "",
+  const getInitialFormData = (profileUser = user) => ({
+    name: profileUser?.name || "",
+    email: profileUser?.email || "",
+    phone: profileUser?.phone || "",
+    address: profileUser?.address || "",
+    businessName: profileUser?.businessName || "",
+    description: profileUser?.description || "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+  const [formData, setFormData] = useState(() => getInitialFormData());
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        businessName: user.businessName || "",
-        description: user.description || "",
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    }
-  }, [user]);
+  const resetFormFromUser = (profileUser = user) =>
+    setFormData((prev) => ({
+      ...getInitialFormData(profileUser),
+      currentPassword: prev.currentPassword,
+      newPassword: prev.newPassword,
+      confirmPassword: prev.confirmPassword,
+    }));
 
   const handleChange = (e) => {
     setFormData({
@@ -63,12 +60,13 @@ export default function Profile() {
         ...response.data,
       };
       login(updatedUser);
+      resetFormFromUser(updatedUser);
 
-      toast.success("Profile updated successfully!");
+      toast.success(t("messages.profileUpdated"));
       setIsEditing(false);
     } catch (error) {
       console.error("Update error:", error);
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      toast.error(error.response?.data?.message || t("messages.profileUpdateError"));
     }
   };
 
@@ -76,12 +74,12 @@ export default function Profile() {
     e.preventDefault();
 
     if (formData.newPassword !== formData.confirmPassword) {
-      toast.error("New passwords do not match");
+      toast.error(t("messages.passwordMismatch"));
       return;
     }
 
     if (formData.newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error(t("messages.passwordLength"));
       return;
     }
 
@@ -91,7 +89,7 @@ export default function Profile() {
         newPassword: formData.newPassword,
       });
 
-      toast.success("Password changed successfully!");
+      toast.success(t("messages.passwordChanged"));
       setFormData({
         ...formData,
         currentPassword: "",
@@ -100,14 +98,24 @@ export default function Profile() {
       });
     } catch (error) {
       console.error("Password change error:", error);
-      toast.error(error.response?.data?.message || "Failed to change password");
+      toast.error(error.response?.data?.message || t("supplier.profile.changePasswordFailed"));
     }
   };
 
   return (
-    <div>
-      <h2 className="dash-title">My Profile</h2>
-      <p className="dash-subtitle">Manage your supplier account information</p>
+    <div className="secondary-page">
+      <BackButton />
+      <div className="page-hero page-hero--profile">
+        <h1>{t("supplier.profile.title")}</h1>
+        <p>{t("supplier.profile.subtitle")}</p>
+      </div>
+
+      <div className="page-header secondary-toolbar">
+        <div>
+          <h2 className="dash-title">{t("supplier.profile.businessDetails")}</h2>
+          <p className="dash-subtitle">{t("supplier.profile.accountSubtitle")}</p>
+        </div>
+      </div>
 
       <div className="profile-container">
         {/* Profile Information Card */}
@@ -117,14 +125,14 @@ export default function Profile() {
               {user?.name?.charAt(0).toUpperCase() || "S"}
             </div>
             <div>
-              <h3>{user?.name || "Supplier"}</h3>
-              <span className="profile-role supplier-role">Supplier</span>
+              <h3>{user?.name || t("common.supplier")}</h3>
+              <span className="profile-role supplier-role">{t("common.supplier")}</span>
             </div>
           </div>
 
           <form onSubmit={handleUpdateProfile} className="profile-form">
             <div className="form-group">
-              <label>Full Name</label>
+              <label>{t("common.labels.fullName")}</label>
               <input
                 type="text"
                 name="name"
@@ -137,7 +145,7 @@ export default function Profile() {
             </div>
 
             <div className="form-group">
-              <label>Business Name</label>
+              <label>{t("common.labels.businessName")}</label>
               <input
                 type="text"
                 name="businessName"
@@ -145,12 +153,12 @@ export default function Profile() {
                 onChange={handleChange}
                 disabled={!isEditing}
                 className="input"
-                placeholder="Enter business name"
+                placeholder={t("supplier.profile.businessNamePlaceholder")}
               />
             </div>
 
             <div className="form-group">
-              <label>Email Address</label>
+              <label>{t("common.labels.email")}</label>
               <input
                 type="email"
                 name="email"
@@ -163,7 +171,7 @@ export default function Profile() {
             </div>
 
             <div className="form-group">
-              <label>Phone Number</label>
+              <label>{t("common.labels.phoneNumber")}</label>
               <input
                 type="tel"
                 name="phone"
@@ -171,12 +179,12 @@ export default function Profile() {
                 onChange={handleChange}
                 disabled={!isEditing}
                 className="input"
-                placeholder="Enter phone number"
+                placeholder={t("supplier.profile.phonePlaceholder")}
               />
             </div>
 
             <div className="form-group">
-              <label>Address</label>
+              <label>{t("common.labels.address")}</label>
               <textarea
                 name="address"
                 value={formData.address}
@@ -184,12 +192,12 @@ export default function Profile() {
                 disabled={!isEditing}
                 className="input"
                 rows="3"
-                placeholder="Enter business address"
+                placeholder={t("supplier.profile.addressPlaceholder")}
               />
             </div>
 
             <div className="form-group">
-              <label>Business Description</label>
+              <label>{t("common.labels.businessDescription")}</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -197,7 +205,7 @@ export default function Profile() {
                 disabled={!isEditing}
                 className="input"
                 rows="4"
-                placeholder="Describe your business and products"
+                placeholder={t("supplier.profile.descriptionPlaceholder")}
               />
             </div>
 
@@ -208,31 +216,22 @@ export default function Profile() {
                   className="btn primary square"
                   onClick={() => setIsEditing(true)}
                 >
-                  Edit Profile
+                  {t("common.actions.editProfile")}
                 </Button>
               ) : (
                 <>
                   <Button type="submit" className="btn primary square">
-                    Save Changes
+                    {t("common.actions.saveChanges")}
                   </Button>
                   <Button
                     type="button"
                     className="btn secondary square"
                     onClick={() => {
                       setIsEditing(false);
-                      // Reset form
-                      setFormData({
-                        ...formData,
-                        name: user.name || "",
-                        email: user.email || "",
-                        phone: user.phone || "",
-                        address: user.address || "",
-                        businessName: user.businessName || "",
-                        description: user.description || "",
-                      });
+                      resetFormFromUser();
                     }}
                   >
-                    Cancel
+                    {t("common.actions.cancel")}
                   </Button>
                 </>
               )}
@@ -242,71 +241,71 @@ export default function Profile() {
 
         {/* Change Password Card */}
         <div className="profile-card">
-          <h3>Change Password</h3>
+          <h3>{t("common.labels.changePassword")}</h3>
           <form onSubmit={handleChangePassword} className="profile-form">
             <div className="form-group">
-              <label>Current Password</label>
+              <label>{t("common.labels.currentPassword")}</label>
               <input
                 type="password"
                 name="currentPassword"
                 value={formData.currentPassword}
                 onChange={handleChange}
                 className="input"
-                placeholder="Enter current password"
+                placeholder={t("common.labels.currentPassword")}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label>New Password</label>
+              <label>{t("common.labels.newPassword")}</label>
               <input
                 type="password"
                 name="newPassword"
                 value={formData.newPassword}
                 onChange={handleChange}
                 className="input"
-                placeholder="Enter new password"
+                placeholder={t("common.labels.newPassword")}
                 minLength="6"
                 required
               />
             </div>
 
             <div className="form-group">
-              <label>Confirm New Password</label>
+              <label>{t("common.labels.confirmPassword")}</label>
               <input
                 type="password"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 className="input"
-                placeholder="Confirm new password"
+                placeholder={t("common.labels.confirmPassword")}
                 minLength="6"
                 required
               />
             </div>
 
             <Button type="submit" className="btn primary square">
-              Update Password
+              {t("supplier.profile.updatePassword")}
             </Button>
           </form>
         </div>
 
         {/* Account Info Card */}
         <div className="profile-card">
-          <h3>Account Information</h3>
+          <h3>{t("common.labels.accountInformation")}</h3>
           <div className="info-list">
             <div className="info-item">
-              <span className="info-label">Account Type:</span>
-              <span className="info-value">Supplier</span>
+              <span className="info-label">{t("common.labels.accountType")}:</span>
+              <span className="info-value">{t("common.supplier")}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">Member Since:</span>
+              <span className="info-label">{t("common.labels.memberSince")}:</span>
               <span className="info-value">
-                {new Date(user?.createdAt || Date.now()).toLocaleDateString()}
+                {memberSinceDate ? memberSinceDate.toLocaleDateString(language === "mr" ? "mr-IN" : "en-IN") : "N/A"}
               </span>
             </div>
             <div className="info-item">
-              <span className="info-label">User ID:</span>
+              <span className="info-label">{t("common.labels.userId")}:</span>
               <span className="info-value">#{user?.id || "N/A"}</span>
             </div>
           </div>

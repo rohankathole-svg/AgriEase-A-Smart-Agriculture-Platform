@@ -13,7 +13,26 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    const savedCart = localStorage.getItem("farmerCart");
+    if (!savedCart) return [];
+    try {
+      const parsed = JSON.parse(savedCart);
+      const hasLegacyItems = Array.isArray(parsed)
+        && parsed.some((item) => item?.supplierId == null);
+
+      if (hasLegacyItems) {
+        localStorage.removeItem("farmerCart");
+        toast.info("Cart was refreshed for marketplace update. Please add items again.");
+        return [];
+      }
+
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      localStorage.removeItem("farmerCart");
+      return [];
+    }
+  });
 
   const findCurrentSupplierId = (items) => {
     const first = items.find((item) => item.supplierId != null);
@@ -25,31 +44,6 @@ export const CartProvider = ({ children }) => {
     if (currentSupplierId == null || incomingSupplierId == null) return false;
     return Number(currentSupplierId) !== Number(incomingSupplierId);
   };
-
-  // Load cart from localStorage on mount
-  useEffect(() => {
-    const savedCart = localStorage.getItem("farmerCart");
-    if (savedCart) {
-      try {
-        const parsed = JSON.parse(savedCart);
-        const hasLegacyItems = Array.isArray(parsed)
-          && parsed.some((item) => item?.supplierId == null);
-
-        if (hasLegacyItems) {
-          // Old cart format before supplier-isolated ordering support.
-          localStorage.removeItem("farmerCart");
-          setCartItems([]);
-          toast.info("Cart was refreshed for marketplace update. Please add items again.");
-          return;
-        }
-
-        setCartItems(Array.isArray(parsed) ? parsed : []);
-      } catch (error) {
-        localStorage.removeItem("farmerCart");
-        setCartItems([]);
-      }
-    }
-  }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {

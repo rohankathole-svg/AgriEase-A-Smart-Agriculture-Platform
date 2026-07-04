@@ -1,147 +1,171 @@
 import axios from "axios";
 
-// Groq API Configuration
-const GROQ_API_KEY = import.meta.env.VITE_GROK_API_KEY || ""; // Using same env var name for compatibility
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GROK_API_KEY || "";
+const XAI_API_KEY = import.meta.env.VITE_XAI_API_KEY || "";
 
-// Check if API key is configured
-if (!GROQ_API_KEY || GROQ_API_KEY === "YOUR_GROK_API_KEY") {
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const XAI_API_URL = "https://api.x.ai/v1/chat/completions";
+
+const GROQ_MODEL = import.meta.env.VITE_GROQ_MODEL || "llama-3.3-70b-versatile";
+const XAI_MODEL = import.meta.env.VITE_XAI_MODEL || "grok-beta";
+
+const SYSTEM_CONTEXT = `You are AgriEase Assistant, a practical agriculture AI assistant.
+Give concise and useful responses for farmers in India.
+Prefer actionable steps, local relevance, and safety in advice.`;
+
+const provider = XAI_API_KEY ? "xai" : GROQ_API_KEY ? "groq" : "fallback";
+
+if (provider === "fallback") {
   console.warn(
-    "⚠️ Groq API key not configured!\n" +
-    "The chatbot will use fallback responses.\n" +
-    "To enable AI responses:\n" +
-    "1. Get API key from: https://console.groq.com\n" +
-    "2. Create .env file in frontend folder\n" +
-    "3. Add: VITE_GROK_API_KEY=your_key_here\n" +
-    "4. Restart the dev server\n" +
-    "See CHATBOT_SETUP.md for detailed instructions."
+    "AI API key not configured. Configure one key:\n" +
+    "1) VITE_XAI_API_KEY (Grok)\n" +
+    "or 2) VITE_GROQ_API_KEY (free Groq)\n" +
+    "Fallback responses will be used."
   );
 }
 
-// System prompt to guide the AI's behavior
-const SYSTEM_CONTEXT = `You are AgriEase Assistant, a helpful AI chatbot specialized in agriculture and farming. 
-You help farmers with information about:
-- Crop selection and recommendations
-- Pest and disease management
-- Fertilizer and soil management
-- Weather-related farming advice
-- Irrigation techniques
-- Seasonal farming tips
-- Market prices and trends
-- Equipment usage
+async function requestAI(messages, options = {}) {
+  const temperature = options.temperature ?? 0.7;
+  const maxTokens = options.maxTokens ?? 700;
 
-Provide concise, practical, and farmer-friendly advice. Keep responses under 150 words unless detailed explanation is needed.`;
-
-/**
- * Send a message to Groq AI and get a response
- * @param {string} userMessage - The user's message
- * @param {Array} conversationHistory - Previous messages for context
- * @returns {Promise<string>} - The AI's response
- */
-export const sendMessageToGemini = async (userMessage, conversationHistory = []) => {
-  // If API key is not configured, use fallback immediately
-  if (!GROQ_API_KEY || GROQ_API_KEY === "YOUR_GROK_API_KEY") {
-    console.log("⚠️ Using fallback - API key not configured");
-    return getFallbackResponse(userMessage);
+  if (provider === "fallback") {
+    return null;
   }
 
-  console.log("✅ Groq API Key found, making API call...");
+  const payload = {
+    model: provider === "xai" ? XAI_MODEL : GROQ_MODEL,
+    messages,
+    temperature,
+    max_tokens: maxTokens,
+  };
 
+  const url = provider === "xai" ? XAI_API_URL : GROQ_API_URL;
+  const key = provider === "xai" ? XAI_API_KEY : GROQ_API_KEY;
+
+  const response = await axios.post(url, payload, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+    },
+  });
+
+  return response.data?.choices?.[0]?.message?.content?.trim() || null;
+}
+
+export const sendMessageToGemini = async (userMessage, conversationHistory = []) => {
   try {
-    // Build messages array for Groq API
-    const messages = [
-      {
-        role: "system",
-        content: SYSTEM_CONTEXT
-      }
-    ];
+    const messages = [{ role: "system", content: SYSTEM_CONTEXT }];
 
-    // Add conversation history for context (last 6 messages)
-    if (conversationHistory.length > 0) {
-      conversationHistory.slice(-6).forEach(msg => {
-        messages.push({
-          role: msg.role === "user" ? "user" : "assistant",
-          content: msg.text
-        });
+    conversationHistory.slice(-6).forEach((msg) => {
+      messages.push({
+        role: msg.role === "user" ? "user" : "assistant",
+        content: msg.text,
       });
-    }
-
-    // Add current user message
-    messages.push({
-      role: "user",
-      content: userMessage
     });
 
-    const requestBody = {
-      messages: messages,
-      model: "llama-3.3-70b-versatile", // Latest Groq Llama model
-      temperature: 0.7,
-      max_tokens: 1024
-    };
+    messages.push({ role: "user", content: userMessage });
 
-    const response = await axios.post(GROQ_API_URL, requestBody, {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${GROQ_API_KEY}`
-      },
-    });
-
-    console.log("✅ Groq API Response received:", response.data);
-
-    // Extract the response text
-    if (response.data?.choices?.[0]?.message?.content) {
-      return response.data.choices[0].message.content.trim();
-    } else {
-      throw new Error("Invalid response format from Groq API");
-    }
+    const aiText = await requestAI(messages, { temperature: 0.7, maxTokens: 900 });
+    if (aiText) return aiText;
+    return getFallbackResponse(userMessage);
   } catch (error) {
-    console.error("❌ Groq API Error:", error.response?.data || error.message);
-    console.error("Full error:", error);
-    console.error("Error details:", JSON.stringify(error.response?.data, null, 2));
-    
-    // Provide fallback responses based on error type
-    if (error.response?.status === 429) {
-      return "I'm experiencing high traffic right now. Please try again in a moment.";
-    } else if (error.response?.status === 403) {
-      return "API key configuration issue. Please contact support.";
-    } else if (!navigator.onLine) {
-      return "You appear to be offline. Please check your internet connection.";
-    }
-    
-    // Generic fallback response
+    console.error("AI chat error:", error?.response?.data || error.message);
     return getFallbackResponse(userMessage);
   }
 };
 
-/**
- * Fallback response when API is unavailable
- */
+export const generateCropAdvisorInsight = async ({
+  location,
+  temperatureCelsius,
+  humidityPercentage,
+  recommendations,
+}) => {
+  const top = (recommendations || []).slice(0, 4)
+    .map((r, idx) => `${idx + 1}. ${r.cropName} (${r.suitabilityPercentage}%)`)
+    .join("\n");
+
+  const prompt = `Create a practical crop advisory in <=120 words.
+Location: ${location}
+Weather: ${temperatureCelsius}C, Humidity ${humidityPercentage}%
+Top crops:
+${top}
+
+Include:
+- best crop choice and why
+- one risk to monitor
+- one action for next 7 days`;
+
+  try {
+    const messages = [
+      { role: "system", content: SYSTEM_CONTEXT },
+      { role: "user", content: prompt },
+    ];
+    const aiText = await requestAI(messages, { temperature: 0.5, maxTokens: 350 });
+    if (aiText) return aiText;
+  } catch (error) {
+    console.error("Crop advisory AI error:", error?.response?.data || error.message);
+  }
+
+  const best = recommendations?.[0];
+  return best
+    ? `Best crop for current conditions in ${location} is ${best.cropName} (${best.suitabilityPercentage}%). Monitor moisture stress and pest pressure this week. Start with seedbed prep and maintain balanced irrigation.`
+    : "Weather-based advisory unavailable right now. Please retry.";
+};
+
+export const generateWeeklyPlanInsight = async ({
+  cropName,
+  scheduleType,
+  totalWeeks,
+  landAreaAcres,
+  weeks,
+}) => {
+  const sampleWeeks = (weeks || []).slice(0, 4).map((w) => ({
+    week: w.weekNumber,
+    focus: w.focus,
+    tasks: w.tasks?.slice(0, 2) || [],
+  }));
+
+  const prompt = `You are an agronomy planner. Summarize this weekly plan in <=140 words.
+Crop: ${cropName}
+Type: ${scheduleType}
+Duration: ${totalWeeks} weeks
+Area: ${landAreaAcres} acres
+Week sample: ${JSON.stringify(sampleWeeks)}
+
+Also provide:
+- 1 optimization tip
+- 1 cost-saving tip
+- 1 caution point`;
+
+  try {
+    const messages = [
+      { role: "system", content: SYSTEM_CONTEXT },
+      { role: "user", content: prompt },
+    ];
+    const aiText = await requestAI(messages, { temperature: 0.45, maxTokens: 380 });
+    if (aiText) return aiText;
+  } catch (error) {
+    console.error("Weekly plan AI error:", error?.response?.data || error.message);
+  }
+
+  return `Plan generated for ${cropName} (${scheduleType}) over ${totalWeeks} weeks on ${landAreaAcres} acres. Prioritize timely irrigation, scouting, and nutrient balancing. Optimize by clustering field tasks by zone, save cost with targeted inputs, and monitor pest outbreaks during humid weeks.`;
+};
+
 const getFallbackResponse = (msg) => {
   const text = msg.toLowerCase();
 
   if (text.includes("crop") && (text.includes("summer") || text.includes("season"))) {
-    return "For summer in Maharashtra, crops like Jowar, Bajra, Moong, and Groundnut are good choices. For winter, consider Wheat, Gram, and Mustard.";
+    return "For summer in Maharashtra, crops like Jowar, Bajra, Moong, and Groundnut are suitable. For winter, consider Wheat, Gram, and Mustard.";
   }
-
   if (text.includes("fertilizer") || text.includes("nutrient")) {
-    return "Use organic compost and soil-test-based fertilizers for best results. NPK ratio depends on your crop and soil type.";
+    return "Use soil-test-based NPK and increase organic matter using compost for sustained yield.";
+  }
+  if (text.includes("pest") || text.includes("disease")) {
+    return "Use early scouting, neem-based sprays, and remove infected plants to limit spread.";
+  }
+  if (text.includes("weather") || text.includes("temperature")) {
+    return "Track weather before irrigation and spraying. Avoid heavy input application before rain.";
   }
 
-  if (text.includes("pest") || text.includes("disease") || text.includes("insect")) {
-    return "Neem oil spray and proper irrigation can help control pests. Use our crop disease detection feature for specific diagnoses.";
-  }
-
-  if (text.includes("weather") || text.includes("rain") || text.includes("temperature")) {
-    return "Check the weather widget on your dashboard for accurate forecasts. Plan your farming activities accordingly.";
-  }
-
-  if (text.includes("market") || text.includes("price") || text.includes("sell")) {
-    return "Visit the Market section to browse products and check current prices. You can also view equipment rentals in the Tools section.";
-  }
-
-  if (text.includes("water") || text.includes("irrigation")) {
-    return "Drip irrigation is most efficient for water conservation. Schedule irrigation based on crop type and soil moisture levels.";
-  }
-
-  return "I'm your AgriEase assistant! Ask me about crops, fertilizers, pests, weather, irrigation, or farming techniques. I'm here to help!";
+  return "Ask about crops, pests, irrigation, fertilizer planning, and market strategy. I can help with actionable farming advice.";
 };

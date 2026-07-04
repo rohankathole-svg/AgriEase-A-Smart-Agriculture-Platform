@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
@@ -12,7 +13,7 @@ export default function Payment() {
   const { clearCart } = useCart();
   const { orderId, orderNumber, displayOrderNumber, amount } = location.state || {};
   const { t } = useLanguage();
-  const [upiId, setUpiId] = useState("agriease@paytm");
+  const upiId = "agriease@paytm";
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [transactionId, setTransactionId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,7 +51,7 @@ export default function Payment() {
 
     setLoading(true);
     try {
-      const response = await api.post("/farmer/payment/confirm", {
+      await api.post("/farmer/payment/confirm", {
         orderId,
         transactionId,
         paymentMethod: "UPI",
@@ -195,14 +196,19 @@ export default function Payment() {
   };
 
   return (
-    <div style={paymentStyles.container}>
+    <motion.div
+      style={paymentStyles.container}
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4 }}
+    >
       {/* Header */}
       <div style={paymentStyles.header}>
         <h2 style={{ margin: 0, fontSize: "24px", fontWeight: "700" }}>
-          Complete Your Payment
+          {t("farmer.payment.title")}
         </h2>
         <p style={{ margin: "8px 0 0 0", opacity: 0.9 }}>
-          Order #{finalOrderNumber}
+          {t("common.labels.orderId")} #{finalOrderNumber}
         </p>
       </div>
 
@@ -210,7 +216,7 @@ export default function Payment() {
         {/* Amount Section */}
         <div style={paymentStyles.amountSection}>
           <div style={{ fontSize: "14px", color: "#64748b", marginBottom: "4px" }}>
-            Amount to Pay
+            {t("farmer.payment.amountToPay")}
           </div>
           <div style={{ fontSize: "32px", fontWeight: "700", color: "#1e293b" }}>
             ₹{amount}
@@ -221,12 +227,12 @@ export default function Payment() {
         <div style={paymentStyles.paymentBody}>
           {/* Payment Method */}
           <div style={paymentStyles.methodTab}>
-            📱 UPI Payment
+            📱 {t("farmer.payment.upiPayment")}
           </div>
 
           {/* Timer */}
           <div style={paymentStyles.timer}>
-            ⏰ Complete payment within {formatTime(timeLeft)}
+            ⏰ {t("farmer.payment.completeWithin")} {formatTime(timeLeft)}
           </div>
 
           {/* QR Code Section */}
@@ -235,8 +241,8 @@ export default function Payment() {
               <img
                 src={qrCodeUrl}
                 alt="UPI QR Code"
-                style={{ 
-                  width: "280px", 
+                style={{
+                  width: "280px",
                   height: "280px",
                   border: "4px solid #f1f5f9",
                   borderRadius: "12px"
@@ -244,33 +250,33 @@ export default function Payment() {
               />
             </div>
             <div style={{ fontSize: "16px", fontWeight: "600", color: "#1e293b", marginBottom: "8px" }}>
-              Scan QR with any UPI app
+              {t("farmer.payment.scanQrPrompt")}
             </div>
             <div style={{ fontSize: "14px", color: "#64748b", marginBottom: "12px" }}>
-              Pay to: {upiId}
+              {t("farmer.payment.payTo")}: {upiId}
             </div>
-            <div style={{ 
-              background: "#e0f2fe", 
-              color: "#0369a1", 
-              padding: "8px 12px", 
-              borderRadius: "6px", 
+            <div style={{
+              background: "#e0f2fe",
+              color: "#0369a1",
+              padding: "8px 12px",
+              borderRadius: "6px",
               fontSize: "13px",
               display: "inline-block"
             }}>
-              PhonePe • GPay • Paytm • BHIM
+              {t("farmer.payment.supportedApps")}
             </div>
           </div>
 
           {/* Transaction ID Input */}
           <div style={paymentStyles.inputGroup}>
             <label style={paymentStyles.label}>
-              Enter Transaction ID / Reference Number
+              {t("common.labels.transactionId")}
             </label>
             <input
               type="text"
               value={transactionId}
               onChange={(e) => setTransactionId(e.target.value.trim())}
-              placeholder="e.g., 123456789012"
+              placeholder={t("common.labels.transactionPlaceholder")}
               disabled={paymentConfirmed || loading}
               maxLength="30"
               style={{
@@ -280,7 +286,7 @@ export default function Payment() {
             />
             {transactionId && transactionId.length < 12 && (
               <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
-                Transaction ID must be at least 12 characters
+                {t("common.labels.transactionValidation")}
               </p>
             )}
           </div>
@@ -296,25 +302,25 @@ export default function Payment() {
             disabled={paymentConfirmed || loading || !transactionId || transactionId.length < 12}
           >
             {loading
-              ? "⏳ Verifying Payment..."
+              ? `⏳ ${t("farmer.payment.verifying")}`
               : paymentConfirmed
-              ? "✅ Payment Confirmed"
-              : "Confirm Payment"}
+                ? `✅ ${t("common.actions.paymentConfirmed")}`
+                : t("common.actions.confirmPayment")}
           </button>
 
           <button
             style={paymentStyles.secondaryBtn}
             onClick={() => navigate("/farmer/cart")}
           >
-            ← Back to Cart
+            ← {t("common.actions.backToCart")}
           </button>
 
           {/* Security Note */}
           <div style={paymentStyles.securityNote}>
-            🔒 Your payment is secured with 256-bit SSL encryption
+            🔒 {t("farmer.payment.securityNote")}
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

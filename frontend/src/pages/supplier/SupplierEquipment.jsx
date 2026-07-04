@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import { uploadToCloudinary } from "../../services/cloudinary";
 import { getSafeImageUrl, onImageError } from "../../utils/imageUtils";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function SupplierEquipment() {
+  const { t } = useLanguage();
   const [equipment, setEquipment] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -19,16 +22,16 @@ export default function SupplierEquipment() {
   const [imagePreview, setImagePreview] = useState(null);
   const [editingId, setEditingId] = useState(null);
 
-  useEffect(() => {
-    fetchEquipment();
-  }, []);
-
-  const fetchEquipment = () => {
+  const fetchEquipment = useCallback(() => {
     api
       .get("/supplier/equipment")
       .then((res) => setEquipment(res.data))
-      .catch(() => toast.error("Failed to load equipment"));
-  };
+      .catch(() => toast.error(t("messages.loadEquipmentError")));
+  }, [t]);
+
+  useEffect(() => {
+    fetchEquipment();
+  }, [fetchEquipment]);
 
   const handleChange = (e) => {
     const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
@@ -52,7 +55,7 @@ export default function SupplierEquipment() {
       let imageUrl = formData.imageUrl;
       
       if (imageFile) {
-        toast.info("Uploading image...");
+        toast.info(t("messages.uploadingImage"));
         imageUrl = await uploadToCloudinary(imageFile);
       }
 
@@ -60,10 +63,10 @@ export default function SupplierEquipment() {
 
       if (editingId) {
         await api.put(`/supplier/equipment/${editingId}`, dataToSend);
-        toast.success("Equipment updated successfully!");
+        toast.success(t("supplier.equipment.toast.updated"));
       } else {
         await api.post("/supplier/equipment", dataToSend);
-        toast.success("Equipment added successfully!");
+        toast.success(t("supplier.equipment.toast.added"));
       }
       setShowForm(false);
       setEditingId(null);
@@ -79,7 +82,7 @@ export default function SupplierEquipment() {
       fetchEquipment();
     } catch (error) {
       console.error("Equipment save error:", error);
-      toast.error("Failed to save equipment");
+      toast.error(t("supplier.equipment.toast.saveError"));
     }
   };
 
@@ -98,15 +101,15 @@ export default function SupplierEquipment() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this equipment?")) {
+    if (!window.confirm(t("supplier.equipment.confirm.delete"))) {
       return;
     }
     try {
       await api.delete(`/supplier/equipment/${id}`);
-      toast.success("Equipment deleted successfully!");
+      toast.success(t("supplier.equipment.toast.deleted"));
       fetchEquipment();
-    } catch (error) {
-      toast.error("Failed to delete equipment");
+    } catch {
+      toast.error(t("supplier.equipment.toast.deleteError"));
     }
   };
 
@@ -115,7 +118,7 @@ export default function SupplierEquipment() {
       // Find the equipment item
       const item = equipment.find(eq => eq.id === id);
       if (!item) {
-        toast.error("Equipment not found");
+        toast.error(t("supplier.equipment.toast.notFound"));
         return;
       }
 
@@ -132,7 +135,7 @@ export default function SupplierEquipment() {
       const response = await api.put(`/supplier/equipment/${id}`, updatedData);
       console.log("Update response:", response.data);
       
-      toast.success("Availability updated!");
+      toast.success(t("supplier.equipment.toast.availabilityUpdated"));
       fetchEquipment();
     } catch (error) {
       console.error("Toggle availability error:", error);
@@ -140,19 +143,25 @@ export default function SupplierEquipment() {
       console.error("Error status:", error.response?.status);
       
       if (error.response?.status === 401) {
-        toast.error("Session expired. Please login again.");
+        toast.error(t("messages.sessionExpired"));
       } else {
-        toast.error(error.response?.data?.message || "Failed to update availability");
+        toast.error(error.response?.data?.message || t("supplier.equipment.toast.availabilityError"));
       }
     }
   };
 
   return (
-    <div>
-      <div className="page-header" style={{ marginBottom: "20px" }}>
+    <div className="secondary-page">
+      <BackButton />
+      <div className="page-hero page-hero--supplier-equipment">
+        <h1>{t("supplier.equipment.title")}</h1>
+        <p>{t("supplier.equipment.subtitle")}</p>
+      </div>
+
+      <div className="page-header secondary-toolbar">
         <div>
-          <h2 className="dash-title">Manage Equipment</h2>
-          <p className="dash-subtitle">Add and manage equipment for rent</p>
+          <h2 className="dash-title">{t("supplier.equipment.fleetTitle")}</h2>
+          <p className="dash-subtitle">{t("supplier.equipment.fleetSubtitle")}</p>
         </div>
         <Button
           className="btn primary square"
@@ -170,16 +179,16 @@ export default function SupplierEquipment() {
             setImagePreview(null);
           }}
         >
-          {showForm ? "Cancel" : "+ Add Equipment"}
+          {showForm ? t("common.actions.cancel") : t("common.actions.addEquipment")}
         </Button>
       </div>
 
       {showForm && (
-        <div className="product-card" style={{ marginBottom: "24px" }}>
-          <h3>{editingId ? "Edit Equipment" : "Add New Equipment"}</h3>
+        <div className="product-card secondary-panel">
+          <h3>{editingId ? t("supplier.equipment.form.editTitle") : t("supplier.equipment.form.addTitle")}</h3>
           <form onSubmit={handleSubmit} className="form-row">
             <div className="form-group">
-              <label>Equipment Name *</label>
+              <label>{t("supplier.equipment.form.name")} *</label>
               <input
                 type="text"
                 name="name"
@@ -187,24 +196,24 @@ export default function SupplierEquipment() {
                 onChange={handleChange}
                 className="input"
                 required
-                placeholder="e.g., Tractor"
+                placeholder={t("supplier.equipment.form.namePlaceholder")}
               />
             </div>
 
             <div className="form-group">
-              <label>Description</label>
+              <label>{t("common.labels.description")}</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 className="input"
                 rows="3"
-                placeholder="Equipment description"
+                placeholder={t("supplier.equipment.form.descriptionPlaceholder")}
               />
             </div>
 
             <div className="form-group">
-              <label>Daily Rate (INR) *</label>
+              <label>{t("supplier.equipment.form.dailyRate")} (INR) *</label>
               <input
                 type="number"
                 name="dailyRate"
@@ -219,7 +228,7 @@ export default function SupplierEquipment() {
             </div>
 
             <div className="form-group">
-              <label>Equipment Image</label>
+              <label>{t("supplier.equipment.form.image")}</label>
               <input
                 type="file"
                 accept="image/*"
@@ -250,12 +259,12 @@ export default function SupplierEquipment() {
                   checked={formData.available}
                   onChange={handleChange}
                 />
-                Available for rent
+                {t("supplier.equipment.form.availableForRent")}
               </label>
             </div>
 
             <Button type="submit" className="btn primary square">
-              {editingId ? "Update Equipment" : "Add Equipment"}
+              {editingId ? t("common.actions.updateEquipment") : t("common.actions.addEquipment")}
             </Button>
           </form>
         </div>
@@ -264,7 +273,7 @@ export default function SupplierEquipment() {
       <div className="product-grid supplier-grid">
         {equipment.length === 0 && (
           <p className="empty-state" style={{ gridColumn: "1 / -1" }}>
-            No equipment yet. Click "Add Equipment" to get started!
+            {t("supplier.equipment.empty")}
           </p>
         )}
         {equipment.map((item) => (
@@ -279,14 +288,14 @@ export default function SupplierEquipment() {
               <div>
                 <h4>{item.name}</h4>
                 <p className="product-description">
-                  {item.description || "No description"}
+                  {item.description || t("supplier.equipment.noDescription")}
                 </p>
               </div>
               <p className="product-rate">INR {item.dailyRate} / day</p>
               <span
                 className={`availability-pill ${item.available ? "is-available" : "is-unavailable"}`}
               >
-                {item.available ? "Available" : "Not Available"}
+                {item.available ? t("common.labels.available") : t("common.labels.unavailable")}
               </span>
             </div>
             <div className="product-actions">
@@ -294,20 +303,20 @@ export default function SupplierEquipment() {
                 className="btn secondary square"
                 onClick={() => handleEdit(item)}
               >
-                Edit
+                {t("common.actions.edit")}
               </Button>
               <Button
                 className="btn secondary square"
                 onClick={() => toggleAvailability(item.id, item.available)}
               >
-                {item.available ? "Mark Unavailable" : "Mark Available"}
+                {item.available ? t("common.actions.markUnavailable") : t("common.actions.markAvailable")}
               </Button>
               <Button
                 className="btn secondary square"
                 onClick={() => handleDelete(item.id)}
                 style={{ background: "#fee", color: "#b42318" }}
               >
-                Delete
+                {t("common.actions.delete")}
               </Button>
             </div>
           </div>

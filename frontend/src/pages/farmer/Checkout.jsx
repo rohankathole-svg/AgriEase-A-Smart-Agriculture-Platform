@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../auth/AuthContext";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import { useLanguage } from "../../context/LanguageContext";
@@ -77,13 +79,13 @@ export default function Checkout() {
 
     const hasMissingSupplier = cartItems.some((item) => item.supplierId == null);
     if (hasMissingSupplier) {
-      toast.error("Some cart items are outdated. Please clear cart and add items again.");
+      toast.error(t("farmer.checkout.toastOutdatedCartItems"));
       return;
     }
 
     const supplierIds = [...new Set(cartItems.map((item) => item.supplierId).filter((id) => id != null))];
     if (supplierIds.length > 1) {
-      toast.error("Your cart has items from multiple suppliers. Please place separate orders.");
+      toast.error(t("farmer.checkout.toastMixedSuppliers"));
       return;
     }
 
@@ -137,35 +139,54 @@ export default function Checkout() {
     }
   };
 
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
   if (!cartItems || !cartItems.length) {
     return (
-      <div style={{ textAlign: "center", padding: "40px" }}>
-        <h2>{t("farmer.checkout.emptyTitle")}</h2>
-        <Button
-          className="btn primary square"
-          onClick={() => navigate("/farmer/market")}
-          style={{ marginTop: "20px" }}
-        >
-          {t("farmer.checkout.emptyAction")}
-        </Button>
-      </div>
+      <motion.div initial="hidden" animate="show" variants={staggerContainer} style={{ textAlign: "center", padding: "40px" }}>
+        <motion.div variants={fadeUp}>
+          <h2>{t("farmer.checkout.emptyTitle")}</h2>
+          <Button
+            className="btn primary square"
+            onClick={() => navigate("/farmer/market")}
+            style={{ marginTop: "20px" }}
+          >
+            {t("farmer.checkout.emptyAction")}
+          </Button>
+        </motion.div>
+      </motion.div>
     );
   }
 
   return (
-    <div>
-      <h2 className="dash-title">{t("farmer.checkout.title")}</h2>
-      <p className="dash-subtitle">{t("farmer.checkout.subtitle")}</p>
+    <motion.div initial="hidden" animate="show" variants={staggerContainer}>
+      <BackButton />
+      <motion.div
+        className="page-hero"
+        style={{ backgroundImage: "url('/images/checkout.jpg')" }}
+        variants={fadeUp}
+      >
+        <h1>{t("farmer.checkout.title")}</h1>
+        <p>{t("farmer.checkout.subtitle")}</p>
+      </motion.div>
 
-      <div className="checkout-alert">
+      <motion.div className="checkout-alert" variants={fadeUp}>
         <p>
           <strong>{t("common.labels.important")}: </strong>
           {t("farmer.checkout.alertText")}
         </p>
-      </div>
+      </motion.div>
 
-      <div className="checkout-grid">
-        <div className="product-card">
+      <motion.div className="checkout-grid" variants={staggerContainer}>
+        <motion.div className="product-card" variants={fadeUp}>
           <h3>{t("common.labels.shippingDetails")}</h3>
           <form onSubmit={handleSubmit} className="form-row">
             <div className="form-group">
@@ -257,9 +278,9 @@ export default function Checkout() {
               {loading ? t("common.actions.processing") : t("common.actions.placeOrder")}
             </Button>
           </form>
-        </div>
+        </motion.div>
 
-        <div>
+        <motion.div variants={fadeUp}>
           <div className="product-card">
             <h3>{t("common.labels.orderSummary")}</h3>
             <div style={{ marginTop: "16px" }}>
@@ -289,8 +310,8 @@ export default function Checkout() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }

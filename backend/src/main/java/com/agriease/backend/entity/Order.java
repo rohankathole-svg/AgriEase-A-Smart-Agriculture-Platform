@@ -19,6 +19,14 @@ public class Order {
     @JoinColumn(name = "user_id")
     private User farmer;
 
+    @ManyToOne
+    @JoinColumn(name = "supplier_id")
+    private User supplier;
+
+    @ManyToOne
+    @JoinColumn(name = "delivery_agent_id")
+    private DeliveryAgent deliveryAgent;
+
     @Column(name = "display_order_number")
     private Integer displayOrderNumber;
 
@@ -29,6 +37,10 @@ public class Order {
     private String paymentStatus = "PENDING"; // PENDING, PAID, FAILED
     private double totalAmount;
     private String status = "PENDING"; // PENDING, CONFIRMED, DELIVERED, CANCELLED
+    private String deliveryAddress;
+    @Column(length = 500)
+    private String deliveryRejectionReason;
+    private LocalDateTime orderDate = LocalDateTime.now();
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
@@ -54,6 +66,22 @@ public class Order {
 
     public void setFarmer(User farmer) {
         this.farmer = farmer;
+    }
+
+    public User getSupplier() {
+        return supplier;
+    }
+
+    public void setSupplier(User supplier) {
+        this.supplier = supplier;
+    }
+
+    public DeliveryAgent getDeliveryAgent() {
+        return deliveryAgent;
+    }
+
+    public void setDeliveryAgent(DeliveryAgent deliveryAgent) {
+        this.deliveryAgent = deliveryAgent;
     }
 
     public Integer getDisplayOrderNumber() {
@@ -102,6 +130,30 @@ public class Order {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public void setDeliveryAddress(String deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
+    }
+
+    public String getDeliveryRejectionReason() {
+        return deliveryRejectionReason;
+    }
+
+    public void setDeliveryRejectionReason(String deliveryRejectionReason) {
+        this.deliveryRejectionReason = deliveryRejectionReason;
+    }
+
+    public LocalDateTime getOrderDate() {
+        return orderDate;
+    }
+
+    public void setOrderDate(LocalDateTime orderDate) {
+        this.orderDate = orderDate;
     }
 
     public LocalDateTime getCreatedAt() {

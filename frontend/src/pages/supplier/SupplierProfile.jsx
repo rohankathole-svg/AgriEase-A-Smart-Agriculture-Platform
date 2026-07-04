@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "../../auth/AuthContext";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function SupplierProfile() {
+  const { t } = useLanguage();
   const { user, updateUser, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -88,9 +92,9 @@ export default function SupplierProfile() {
       });
     } catch (error) {
       console.error("Failed to load business stats", error);
-      setStatsError("Unable to load live stats right now");
+      setStatsError(t("supplier.profile.statsError"));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadBusinessStats();
@@ -126,13 +130,13 @@ export default function SupplierProfile() {
     if (file) {
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image size should be less than 2MB");
+        toast.error(t("messages.imageTooLarge"));
         return;
       }
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        toast.error("Please select an image file");
+        toast.error(t("messages.imageType"));
         return;
       }
 
@@ -148,7 +152,7 @@ export default function SupplierProfile() {
         setUploadingPhoto(false);
       };
       reader.onerror = () => {
-        toast.error("Failed to read image file");
+        toast.error(t("messages.imageReadError"));
         setUploadingPhoto(false);
       };
       reader.readAsDataURL(file);
@@ -186,12 +190,12 @@ export default function SupplierProfile() {
         await loadProfile();
       }
       
-      toast.success("Profile updated successfully!");
+      toast.success(t("messages.profileUpdated"));
       setIsEditing(false);
       loadBusinessStats();
     } catch (error) {
       console.error("Profile update error:", error);
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      toast.error(error.response?.data?.message || t("messages.profileUpdateError"));
     }
   };
 
@@ -222,26 +226,33 @@ export default function SupplierProfile() {
           throw error;
         }
       }
-      toast.success("Account deleted successfully");
+      toast.success(t("supplier.profile.accountDeleted"));
       logout();
     } catch (error) {
       console.error("Delete account error:", error);
-      toast.error(error?.response?.data?.message || "Failed to delete account");
+      toast.error(error?.response?.data?.message || t("supplier.profile.deleteAccountFailed"));
     } finally {
       setDeletingAccount(false);
     }
   };
 
   return (
-    <div>
-      <h2 className="dash-title">My Profile</h2>
-      <p className="dash-subtitle">Manage your account information</p>
+    <motion.div className="secondary-page" initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}>
+      <BackButton />
+      <motion.div 
+        className="page-hero page-hero--profile" 
+        style={{ backgroundImage: "url('/images/profile.jpg')", backgroundBlendMode: "overlay" }}
+        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}
+      >
+        <h1>{t("supplier.profile.title")}</h1>
+        <p>{t("supplier.profile.subtitle")}</p>
+      </motion.div>
 
-      <div className="profile-container">
-        <div className="profile-card">
-          <div className="profile-header">
+      <motion.div className="profile-container profile-container--premium" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}>
+        <motion.div className="profile-card profile-card--premium" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
+          <div className="profile-header profile-header--enhanced">
             <div className="profile-avatar-section">
-              <div className="profile-avatar">
+              <div className="profile-avatar profile-avatar--supplier">
                 {photoPreview ? (
                   <img src={photoPreview} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                 ) : (
@@ -249,7 +260,7 @@ export default function SupplierProfile() {
                 )}
               </div>
               {isEditing && (
-                <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+                <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <input
                     type="file"
                     accept="image/*"
@@ -259,7 +270,7 @@ export default function SupplierProfile() {
                     disabled={uploadingPhoto}
                   />
                   <label 
-                    htmlFor="supplier-photo-upload" 
+                    htmlFor="supplier-photo-upload"
                     style={{ cursor: uploadingPhoto ? 'not-allowed' : 'pointer' }}
                   >
                     <span 
@@ -268,10 +279,15 @@ export default function SupplierProfile() {
                         fontSize: '12px', 
                         padding: '6px 12px',
                         display: 'inline-block',
-                        opacity: uploadingPhoto ? 0.6 : 1
+                        opacity: uploadingPhoto ? 0.6 : 1,
+                        backgroundColor: '#2563eb',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: '600'
                       }}
                     >
-                      {uploadingPhoto ? "Uploading..." : "Change Photo"}
+                      {uploadingPhoto ? t("messages.uploadingImage") : t("supplier.profile.changePhoto")}
                     </span>
                   </label>
                   {photoPreview && (
@@ -279,135 +295,173 @@ export default function SupplierProfile() {
                       type="button"
                       className="btn secondary square"
                       onClick={removePhoto}
-                      style={{ fontSize: '12px', padding: '6px 12px' }}
+                      style={{ 
+                        fontSize: '12px', 
+                        padding: '6px 12px',
+                        backgroundColor: '#f44336',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
                     >
-                      Remove
+                      {t("supplier.profile.removePhoto")}
                     </button>
                   )}
                 </div>
               )}
             </div>
-            <div>
-              <h3>{formData.name || user?.name || "Supplier"}</h3>
-              <span className="profile-role">Supplier</span>
-              {formData.phone && <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>📞 {formData.phone}</p>}
+            <div className="profile-header__info">
+              <h3 className="profile-header__name">{formData.name || user?.name || t("common.supplier")}</h3>
+              <span className="profile-role profile-role--supplier">{t("common.supplier")}</span>
+              {formData.businessName && <p className="profile-header__contact">🏢 {formData.businessName}</p>}
+              {formData.phone && <p className="profile-header__contact">📞 {formData.phone}</p>}
+              {formData.email && <p className="profile-header__email">✉️ {formData.email}</p>}
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="profile-form">
-            <div className="form-group">
-              <label>Full Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                required
-              />
+          <div className="profile-divider"></div>
+
+          <form onSubmit={handleSubmit} className="profile-form profile-form--enhanced">
+            <div className="profile-form__section">
+              <h4 className="profile-form__section-title">{t("supplier.profile.personalInfo")}</h4>
+              <div className="profile-form__grid">
+                <div className="form-group form-group--enhanced">
+                  <label>{t("common.labels.fullName")}</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    required
+                  />
+                </div>
+
+                <div className="form-group form-group--enhanced">
+                  <label>{t("common.labels.email")}</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    required
+                  />
+                </div>
+
+                <div className="form-group form-group--enhanced">
+                  <label>{t("common.labels.phoneNumber")}</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    placeholder={t("farmer.profile.placeholders.phone")}
+                  />
+                </div>
+
+                <div className="form-group form-group--enhanced">
+                  <label>{t("common.labels.address")}</label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    rows="2"
+                    placeholder={t("supplier.profile.addressPlaceholder")}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                required
-              />
+            <div className="profile-form__divider"></div>
+
+            <div className="profile-form__section">
+              <h4 className="profile-form__section-title">{t("supplier.profile.businessDetails")}</h4>
+              <div className="profile-form__grid">
+                <div className="form-group form-group--enhanced">
+                  <label>{t("common.labels.businessName")}</label>
+                  <input
+                    type="text"
+                    name="businessName"
+                    value={formData.businessName}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                    placeholder={t("supplier.profile.businessNamePlaceholder")}
+                  />
+                </div>
+
+                <div className="form-group form-group--enhanced">
+                  <label>{t("common.labels.businessType")}</label>
+                  <select
+                    name="businessType"
+                    value={formData.businessType}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="input input--enhanced"
+                  >
+                    <option value="">{t("supplier.profile.selectBusinessType")}</option>
+                    <option value="Equipment Rental">{t("supplier.profile.businessTypes.equipmentRental")}</option>
+                    <option value="Seeds & Fertilizers">{t("supplier.profile.businessTypes.seedsAndFertilizers")}</option>
+                    <option value="Pesticides">{t("supplier.profile.businessTypes.pesticides")}</option>
+                    <option value="General Supplies">{t("supplier.profile.businessTypes.generalSupplies")}</option>
+                    <option value="Other">{t("supplier.profile.businessTypes.other")}</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>Phone Number</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                placeholder="Enter phone number"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Address</label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                rows="3"
-                placeholder="Enter your business address"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Business Name</label>
-              <input
-                type="text"
-                name="businessName"
-                value={formData.businessName}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-                placeholder="e.g., ABC Agri Supplies"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Business Type</label>
-              <select
-                name="businessType"
-                value={formData.businessType}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="input"
-              >
-                <option value="">Select business type</option>
-                <option value="Equipment Rental">Equipment Rental</option>
-                <option value="Seeds & Fertilizers">Seeds & Fertilizers</option>
-                <option value="Pesticides">Pesticides</option>
-                <option value="General Supplies">General Supplies</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            <div className="profile-actions">
+            <div className="profile-actions profile-actions--enhanced">
               {!isEditing ? (
                 <>
-                  <Button
-                    type="button"
-                    className="btn primary square"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log("Edit Profile button clicked, entering edit mode");
-                      setIsEditing(true);
-                    }}
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    Edit Profile
-                  </Button>
-                  <Button
-                    type="button"
-                    className="btn secondary square"
-                    onClick={handleDeleteAccount}
-                    loading={deletingAccount}
-                    style={{ background: "#fee", color: "#b42318", border: "1px solid #fdd" }}
+                    <Button
+                      type="button"
+                      className="btn primary square"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsEditing(true);
+                      }}
+                    >
+                      {t("common.actions.editProfile")}
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    Delete Account
-                  </Button>
+                    <Button
+                      type="button"
+                      className="btn btn--danger-outline"
+                      onClick={handleDeleteAccount}
+                      loading={deletingAccount}
+                    >
+                      {t("supplier.profile.deleteAccount")}
+                    </Button>
+                  </motion.div>
                 </>
               ) : (
                 <>
-                  <Button type="submit" className="btn primary square">
-                    Save Changes
-                  </Button>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button type="submit" className="btn primary square">
+                      {t("common.actions.saveChanges")}
+                    </Button>
+                  </motion.div>
                   <Button
                     type="button"
                     className="btn secondary square"
@@ -415,7 +469,6 @@ export default function SupplierProfile() {
                       e.preventDefault();
                       e.stopPropagation();
                       setIsEditing(false);
-                      // Reset form data
                       setFormData({
                         name: user.name || "",
                         email: user.email || "",
@@ -428,47 +481,56 @@ export default function SupplierProfile() {
                       setPhotoPreview(user.profilePhoto || null);
                     }}
                   >
-                    Cancel
+                    {t("common.actions.cancel")}
                   </Button>
                 </>
               )}
             </div>
           </form>
-        </div>
+        </motion.div>
 
-        <div className="profile-stats">
-          <h3>Business Statistics</h3>
-          {statsError && <p className="inline-error">{statsError}</p>}
-          <div className="stat-card">
-            <div className="stat-icon">📦</div>
-            <div>
-              <h4>Products Listed</h4>
-              <p className="stat-value">{businessStats.products}</p>
-            </div>
+        <motion.div className="profile-stats profile-stats--premium" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
+          <div className="profile-stats__header">
+            <h3 className="profile-stats__title">{t("supplier.profile.businessStatistics")}</h3>
           </div>
-          <div className="stat-card">
-            <div className="stat-icon">🚜</div>
-            <div>
-              <h4>Equipment Listed</h4>
-              <p className="stat-value">{businessStats.equipment}</p>
-            </div>
+          
+          {statsError && <p className="profile-stats__error">{statsError}</p>}
+          
+          <div className="profile-stats__grid">
+            <motion.div className="stat-card stat-card--premium" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
+              <div className="stat-card__icon">📦</div>
+              <div className="stat-card__content">
+                <h4 className="stat-card__title">{t("supplier.profile.stats.productsListed")}</h4>
+                <p className="stat-card__value">{businessStats.products}</p>
+              </div>
+            </motion.div>
+
+            <motion.div className="stat-card stat-card--premium" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
+              <div className="stat-card__icon">🚜</div>
+              <div className="stat-card__content">
+                <h4 className="stat-card__title">{t("supplier.profile.stats.equipmentListed")}</h4>
+                <p className="stat-card__value">{businessStats.equipment}</p>
+              </div>
+            </motion.div>
+
+            <motion.div className="stat-card stat-card--premium" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
+              <div className="stat-card__icon">📊</div>
+              <div className="stat-card__content">
+                <h4 className="stat-card__title">{t("supplier.profile.stats.totalSales")}</h4>
+                <p className="stat-card__value">{currencyFormatter.format(businessStats.totalSales)}</p>
+              </div>
+            </motion.div>
+
+            <motion.div className="stat-card stat-card--premium" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
+              <div className="stat-card__icon">🧾</div>
+              <div className="stat-card__content">
+                <h4 className="stat-card__title">{t("supplier.profile.stats.totalOrders")}</h4>
+                <p className="stat-card__value">{businessStats.totalOrders}</p>
+              </div>
+            </motion.div>
           </div>
-          <div className="stat-card">
-            <div className="stat-icon">📊</div>
-            <div>
-              <h4>Total Sales</h4>
-              <p className="stat-value">{currencyFormatter.format(businessStats.totalSales)}</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">🧾</div>
-            <div>
-              <h4>Total Orders</h4>
-              <p className="stat-value">{businessStats.totalOrders}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }

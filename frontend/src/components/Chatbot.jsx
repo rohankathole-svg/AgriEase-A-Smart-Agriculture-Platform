@@ -2,12 +2,23 @@ import { useState } from "react";
 import Button from "./ui/Button";
 import { sendMessageToGemini } from "../services/geminiService";
 import { toast } from "react-toastify";
+import { useLanguage } from "../context/LanguageContext";
 
 function Chatbot() {
+  const { language, t } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  const speakText = (text) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = language === "mr" ? "mr-IN" : "en-IN";
+    utterance.rate = 1;
+    window.speechSynthesis.speak(utterance);
+  };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -24,10 +35,10 @@ function Chatbot() {
       setMessages((prev) => [...prev, botMsg]);
     } catch (error) {
       console.error("Chatbot error:", error);
-      toast.error("Failed to get response. Please try again.");
+      toast.error(t("chatbot.responseFailed"));
       const errorMsg = {
         role: "bot",
-        text: "Sorry, I'm having trouble responding right now. Please try again in a moment.",
+        text: t("chatbot.responseFallback"),
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -47,14 +58,17 @@ function Chatbot() {
       <div className={`chatbot-panel ${isOpen ? "open" : ""}`} aria-hidden={!isOpen}>
         <header className="chatbot-panel__header">
           <div>
-            <p className="chatbot-panel__eyebrow">AgriEase AI</p>
-            <h3>Need help on the field?</h3>
+            <p className="chatbot-panel__eyebrow">{t("chatbot.eyebrow")}</p>
+            <h3>{t("chatbot.title")}</h3>
           </div>
           <button
             type="button"
             className="chatbot-panel__close"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close chatbot"
+            onClick={() => {
+              window.speechSynthesis?.cancel();
+              setIsOpen(false);
+            }}
+            aria-label={t("chatbot.closeAria")}
           >
             ×
           </button>
@@ -63,7 +77,7 @@ function Chatbot() {
         <div className="chat-messages">
           {messages.length === 0 && (
             <div className="chat-bubble bot">
-              👋 Hello! I'm your AgriEase AI Assistant. Ask me anything about farming, crops, pests, weather, or agriculture!
+              {t("chatbot.welcome")}
             </div>
           )}
           {messages.map((m, i) => (
@@ -72,6 +86,11 @@ function Chatbot() {
               className={`chat-bubble ${m.role === "user" ? "user" : "bot"}`}
             >
               {m.text}
+              {m.role === "bot" && (
+                <button type="button" className="chatbot-speak-btn" onClick={() => speakText(m.text)} title={t("chatbot.listen")}> 
+                  🔊
+                </button>
+              )}
             </div>
           ))}
           {isLoading && (
@@ -86,7 +105,7 @@ function Chatbot() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask about farming, crops, pests..."
+            placeholder={t("chatbot.placeholder")}
             className="input"
             disabled={isLoading}
           />
@@ -95,7 +114,7 @@ function Chatbot() {
             className="btn primary square"
             disabled={isLoading || !input.trim()}
           >
-            {isLoading ? "..." : "Send"}
+            {isLoading ? "..." : t("chatbot.send")}
           </Button>
         </div>
       </div>
@@ -104,13 +123,13 @@ function Chatbot() {
         type="button"
         className={`chatbot-launcher ${isOpen ? "active" : ""}`}
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label="Chat with AgriEase assistant"
+        aria-label={t("chatbot.launcherAria")}
         aria-expanded={isOpen}
       >
         <span className="launcher-icon" aria-hidden="true">
           🤖
         </span>
-        <span className="launcher-text">Ask AgriEase</span>
+        <span className="launcher-text">{t("chatbot.launcherText")}</span>
       </button>
     </>
   );

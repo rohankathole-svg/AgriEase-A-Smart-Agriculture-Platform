@@ -9,6 +9,8 @@ import com.agriease.backend.entity.User;
 import com.agriease.backend.entity.UserRole;
 import com.agriease.backend.repository.UserRepository;
 import com.agriease.backend.repository.UserRoleRepository;
+import com.agriease.delivery.repositories.DeliveryAgentRepository;
+import com.agriease.backend.entity.DeliveryAgent;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,13 +25,16 @@ public class AuthService {
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final DeliveryAgentRepository deliveryAgentRepository;
 
     public AuthService(UserRepository repo, UserRoleRepository userRoleRepository,
-                       PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+                       PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
+                       DeliveryAgentRepository deliveryAgentRepository) {
         this.repo = repo;
         this.userRoleRepository = userRoleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.deliveryAgentRepository = deliveryAgentRepository;
     }
 
     public User register(RegisterRequest request) {
@@ -49,7 +54,11 @@ public class AuthService {
                 throw new RuntimeException("Role already linked to this account");
             }
             existing.addRole(requestedRole);
-            return repo.save(existing);
+            User saved = repo.save(existing);
+            if (requestedRole == RoleType.DELIVERY_AGENT) {
+                ensureDeliveryAgentProfile(saved);
+            }
+            return saved;
         }
 
         User user = new User();
@@ -59,7 +68,11 @@ public class AuthService {
         user.setActiveRole(requestedRole);
         user.addRole(requestedRole);
 
-        return repo.save(user);
+        User saved = repo.save(user);
+        if (requestedRole == RoleType.DELIVERY_AGENT) {
+            ensureDeliveryAgentProfile(saved);
+        }
+        return saved;
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -99,6 +112,10 @@ public class AuthService {
             repo.save(user);
         }
 
+        if (user.getActiveRole().canonical() == RoleType.DELIVERY_AGENT) {
+            ensureDeliveryAgentProfile(user);
+        }
+
         String token = jwtUtil.generateToken(user.getEmail(), user.getActiveRole().canonical());
 
         return new LoginResponse(
@@ -127,14 +144,22 @@ public class AuthService {
         user.setActiveRole(requestedRole);
         repo.save(user);
 
+        if (requestedRole.canonical() == RoleType.DELIVERY_AGENT) {
+            ensureDeliveryAgentProfile(user);
+        }
+
         String token = jwtUtil.generateToken(user.getEmail(), requestedRole.canonical());
         return new LoginResponse(token, requestedRole.canonical().name(), user.getName(), user.getId(), toRoleNames(user));
     }
 
     private RoleType parseRole(String role) {
         if (role == null) return null;
+        String normalized = role.trim().toUpperCase();
+        if ("CUSTOMER".equals(normalized)) {
+            return RoleType.SUPPLIER;
+        }
         try {
-            return RoleType.fromInput(role);
+            return RoleType.fromInput(normalized);
         } catch (IllegalArgumentException ex) {
             throw new RuntimeException("Unsupported role: " + role);
         }
@@ -166,5 +191,28 @@ public class AuthService {
         if (changed) {
             repo.save(user);
         }
+    }
+
+    private void ensureDeliveryAgentProfile(User user) {
+        if (user == null || user.getEmail() == null || user.getEmail().isBlank()) {
+            return;
+        }
+        if (deliveryAgentRepository.findByEmail(user.getEmail()).isPresent()) {
+            return;
+        }
+
+        DeliveryAgent agent = new DeliveryAgent();
+        agent.setEmail(user.getEmail());
+        agent.setPassword(firstNonBlank(user.getPassword(), user.getEmail()));
+        agent.setName(firstNonBlank(user.getName(), user.getEmail()));
+        agent.setPhone(firstNonBlank(user.getPhone(), "Not provided"));
+        deliveryAgentRepository.save(agent);
+    }
+
+    private String firstNonBlank(String primary, String fallback) {
+        if (primary != null && !primary.isBlank()) {
+            return primary.trim();
+        }
+        return fallback;
     }
 }

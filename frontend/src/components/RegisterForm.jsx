@@ -152,6 +152,13 @@ export default function RegisterForm({ onSwitchToLogin }) {
           >
             Supplier
           </button>
+          <button
+            type="button"
+            className={form.role === "DELIVERY_AGENT" ? "active" : ""}
+            onClick={() => setForm((prev) => ({ ...prev, role: "DELIVERY_AGENT" }))}
+          >
+            Delivery Agent
+          </button>
         </div>
         {errors.role ? <p className="agri-field-error">{errors.role}</p> : null}
       </div>

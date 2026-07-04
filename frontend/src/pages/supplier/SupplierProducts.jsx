@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import { uploadToCloudinary } from "../../services/cloudinary";
 import { getSafeImageUrl, onImageError } from "../../utils/imageUtils";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function SupplierProducts() {
+  const { t } = useLanguage();
   const [products, setProducts] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -19,16 +22,16 @@ export default function SupplierProducts() {
   const [imagePreview, setImagePreview] = useState(null);
   const [editingId, setEditingId] = useState(null);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = () => {
+  const fetchProducts = useCallback(() => {
     api
       .get("/supplier/products")
       .then((res) => setProducts(res.data))
-      .catch(() => toast.error("Failed to load products"));
-  };
+      .catch(() => toast.error(t("messages.loadProductsError")));
+  }, [t]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleChange = (e) => {
     setFormData({
@@ -51,7 +54,7 @@ export default function SupplierProducts() {
       let imageUrl = formData.imageUrl;
       
       if (imageFile) {
-        toast.info("Uploading image...");
+        toast.info(t("messages.uploadingImage"));
         imageUrl = await uploadToCloudinary(imageFile);
       }
 
@@ -59,10 +62,10 @@ export default function SupplierProducts() {
 
       if (editingId) {
         await api.put(`/supplier/products/${editingId}`, dataToSend);
-        toast.success("Product updated successfully!");
+        toast.success(t("supplier.products.toast.updated"));
       } else {
         await api.post("/supplier/products", dataToSend);
-        toast.success("Product added successfully!");
+        toast.success(t("supplier.products.toast.added"));
       }
       setShowForm(false);
       setEditingId(null);
@@ -78,7 +81,7 @@ export default function SupplierProducts() {
       fetchProducts();
     } catch (error) {
       console.error("Product save error:", error);
-      toast.error("Failed to save product");
+      toast.error(t("supplier.products.toast.saveError"));
     }
   };
 
@@ -97,24 +100,30 @@ export default function SupplierProducts() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) {
+    if (!window.confirm(t("supplier.products.confirm.delete"))) {
       return;
     }
     try {
       await api.delete(`/supplier/products/${id}`);
-      toast.success("Product deleted successfully!");
+      toast.success(t("supplier.products.toast.deleted"));
       fetchProducts();
-    } catch (error) {
-      toast.error("Failed to delete product");
+    } catch {
+      toast.error(t("supplier.products.toast.deleteError"));
     }
   };
 
   return (
-    <div>
-      <div className="page-header" style={{ marginBottom: "20px" }}>
+    <div className="secondary-page">
+      <BackButton />
+      <div className="page-hero page-hero--supplier-products">
+        <h1>{t("supplier.products.title")}</h1>
+        <p>{t("supplier.products.subtitle")}</p>
+      </div>
+
+      <div className="page-header secondary-toolbar">
         <div>
-          <h2 className="dash-title">Manage Products</h2>
-          <p className="dash-subtitle">Add and manage your product listings</p>
+          <h2 className="dash-title">{t("supplier.products.catalogTitle")}</h2>
+          <p className="dash-subtitle">{t("supplier.products.catalogSubtitle")}</p>
         </div>
         <Button
           className="btn primary square"
@@ -132,16 +141,16 @@ export default function SupplierProducts() {
             setImagePreview(null);
           }}
         >
-          {showForm ? "Cancel" : "+ Add Product"}
+          {showForm ? t("common.actions.cancel") : t("common.actions.addProduct")}
         </Button>
       </div>
 
       {showForm && (
-        <div className="product-card" style={{ marginBottom: "24px" }}>
-          <h3>{editingId ? "Edit Product" : "Add New Product"}</h3>
+        <div className="product-card secondary-panel">
+          <h3>{editingId ? t("supplier.products.form.editTitle") : t("supplier.products.form.addTitle")}</h3>
           <form onSubmit={handleSubmit} className="form-row">
             <div className="form-group">
-              <label>Product Name *</label>
+              <label>{t("supplier.products.form.productName")} *</label>
               <input
                 type="text"
                 name="name"
@@ -149,24 +158,24 @@ export default function SupplierProducts() {
                 onChange={handleChange}
                 className="input"
                 required
-                placeholder="e.g., Organic Fertilizer"
+                placeholder={t("supplier.products.form.productNamePlaceholder")}
               />
             </div>
 
             <div className="form-group">
-              <label>Description</label>
+              <label>{t("common.labels.description")}</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 className="input"
                 rows="3"
-                placeholder="Product description"
+                placeholder={t("supplier.products.form.descriptionPlaceholder")}
               />
             </div>
 
             <div className="form-group">
-              <label>Price (INR) *</label>
+              <label>{t("supplier.products.form.price")} (INR) *</label>
               <input
                 type="number"
                 name="price"
@@ -181,22 +190,22 @@ export default function SupplierProducts() {
             </div>
 
             <div className="form-group">
-              <label>Type</label>
+              <label>{t("supplier.products.form.type")}</label>
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
                 className="input"
               >
-                <option value="PRODUCT">Product</option>
-                <option value="CROP">Crop/Seeds</option>
-                <option value="FERTILIZER">Fertilizer</option>
-                <option value="PESTICIDE">Pesticide</option>
+                <option value="PRODUCT">{t("common.labels.product")}</option>
+                <option value="CROP">{t("supplier.products.types.cropSeeds")}</option>
+                <option value="FERTILIZER">{t("supplier.products.types.fertilizer")}</option>
+                <option value="PESTICIDE">{t("supplier.products.types.pesticide")}</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label>Product Image</label>
+              <label>{t("supplier.products.form.image")}</label>
               <input
                 type="file"
                 accept="image/*"
@@ -220,7 +229,7 @@ export default function SupplierProducts() {
             </div>
 
             <Button type="submit" className="btn primary square">
-              {editingId ? "Update Product" : "Add Product"}
+              {editingId ? t("common.actions.updateProduct") : t("common.actions.addProduct")}
             </Button>
           </form>
         </div>
@@ -229,7 +238,7 @@ export default function SupplierProducts() {
       <div className="product-grid">
         {products.length === 0 && (
           <p className="empty-state" style={{ gridColumn: "1 / -1" }}>
-            No products yet. Click "Add Product" to get started!
+            {t("supplier.products.empty")}
           </p>
         )}
         {products.map((product) => (
@@ -242,7 +251,7 @@ export default function SupplierProducts() {
             />
             <h4>{product.name}</h4>
             <p style={{ fontSize: "14px", color: "var(--muted)" }}>
-              {product.description || "No description"}
+              {product.description || t("supplier.products.noDescription")}
             </p>
             <p style={{ fontSize: "18px", fontWeight: "700", color: "#15803d" }}>
               INR {product.price}
@@ -254,14 +263,14 @@ export default function SupplierProducts() {
                 onClick={() => handleEdit(product)}
                 style={{ flex: 1 }}
               >
-                Edit
+                {t("common.actions.edit")}
               </Button>
               <Button
                 className="btn secondary square"
                 onClick={() => handleDelete(product.id)}
                 style={{ flex: 1, background: "#fee", color: "#b42318" }}
               >
-                Delete
+                {t("common.actions.delete")}
               </Button>
             </div>
           </div>

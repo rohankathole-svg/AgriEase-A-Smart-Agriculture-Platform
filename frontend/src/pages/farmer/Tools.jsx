@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import { useCart } from "../../context/CartContext";
@@ -62,7 +64,7 @@ function Tools() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     hydrateFromCache();
@@ -83,17 +85,35 @@ function Tools() {
     toast.success(t("messages.equipmentReserved"));
   };
 
-  return (
-    <div>
-      <h2 className="dash-title">{t("farmer.tools.title")}</h2>
-      <p className="dash-subtitle">{t("farmer.tools.subtitle")}</p>
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
 
-      <div className="chip-row">
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  return (
+    <motion.div initial="hidden" animate="show" variants={staggerContainer}>
+      <BackButton />
+      <motion.div
+        className="page-hero"
+        style={{ backgroundImage: "url('/images/tools.jpg')" }}
+        variants={fadeUp}
+      >
+        <h1>{t("farmer.tools.title")}</h1>
+        <p>{t("farmer.tools.subtitle")}</p>
+      </motion.div>
+
+      <motion.div className="chip-row" variants={fadeUp} style={{ alignItems: "center" }}>
         <input
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           className="input"
+          style={{ maxWidth: 180, fontSize: 13, padding: "6px 10px" }}
         />
         <input
           type="date"
@@ -101,31 +121,38 @@ function Tools() {
           min={startDate || undefined}
           onChange={(e) => setEndDate(e.target.value)}
           className="input"
+          style={{ maxWidth: 180, fontSize: 13, padding: "6px 10px" }}
         />
         <Button
           className="btn ghost"
           onClick={fetchEquipment}
           loading={isLoading}
           type="button"
+          style={{ fontSize: 13, padding: "6px 14px", height: 36 }}
         >
           {t("farmer.home.refresh")}
         </Button>
-      </div>
+      </motion.div>
 
       {lastSynced && (
-        <p className="data-sync-meta">
+        <motion.p className="data-sync-meta" variants={fadeUp}>
           {t("common.labels.lastSynced")}: {new Date(lastSynced).toLocaleTimeString(language === "mr" ? "mr-IN" : undefined, { hour: "2-digit", minute: "2-digit" })}
-        </p>
+        </motion.p>
       )}
 
-      {error && <p className="inline-error">{error}</p>}
+      {error && <motion.p className="inline-error" variants={fadeUp}>{error}</motion.p>}
 
-      <div className="product-grid">
+      <motion.div className="product-grid" variants={staggerContainer}>
         {isLoading && tools.length === 0 && <p>{t("farmer.tools.loading")}</p>}
         {!isLoading && tools.length === 0 && !error && <p>{t("farmer.tools.empty")}</p>}
 
         {tools.map((p) => (
-          <div key={p.id} className="product-card reveal">
+          <motion.div
+            key={p.id}
+            className="product-card"
+            variants={fadeUp}
+            whileHover={{ scale: 1.02, y: -4 }}
+          >
             <img
               src={getSafeImageUrl(p.imageUrl, "equipment")}
               alt={p.name}
@@ -166,10 +193,10 @@ function Tools() {
             >
               {p.available ? t("common.actions.addToCart") : t("farmer.tools.unavailable")}
             </Button>
-          </div>
+          </motion.div>
         ))}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/BackButton";
 import { toast } from "react-toastify";
 import { predictDisease } from "../../services/diseaseService";
 import { useLanguage } from "../../context/LanguageContext";
@@ -38,30 +40,54 @@ function FarmerDisease() {
     }
   };
 
-  return (
-    <div>
-      <h2 className="dash-title">{t("farmer.disease.title")}</h2>
-      <p className="dash-subtitle">{t("farmer.disease.subtitle")}</p>
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
 
-      <div className="disease-card">
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  return (
+    <motion.div initial="hidden" animate="show" variants={staggerContainer}>
+      <BackButton />
+      <motion.div
+        className="page-hero"
+        style={{ backgroundImage: "url('/images/disease.jpg')" }}
+        variants={fadeUp}
+      >
+        <h1>{t("farmer.disease.title")}</h1>
+        <p>{t("farmer.disease.subtitle")}</p>
+      </motion.div>
+
+      <motion.div className="disease-card" variants={fadeUp}>
         <label className="file-label">
           {t("farmer.disease.uploadLabel")}
           <input type="file" onChange={handleImageChange} className="file-input" />
         </label>
 
         {preview && (
-          <img src={preview} alt="preview" className="upload-preview" />
+          <img src={preview} alt="preview" className="upload-preview" style={{ borderRadius: "12px", marginTop: "16px" }} />
         )}
 
-        <Button onClick={handlePredict} loading={loading} className="btn primary">
-          {t("common.actions.detectDisease")}
-        </Button>
+        <div style={{ marginTop: "20px" }}>
+          <Button onClick={handlePredict} loading={loading} className="btn primary">
+            {t("common.actions.detectDisease")}
+          </Button>
+        </div>
 
-        {error && <p className="dash-subtitle">{error}</p>}
+        {error && <p className="dash-subtitle" style={{ marginTop: "12px", color: "var(--agri-danger)" }}>{error}</p>}
 
         {result && (
-          <div className="info-list">
-            <h3>{result.disease}</h3>
+          <motion.div
+            className="info-list"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{ marginTop: "24px", background: "rgba(255,255,255,0.7)", padding: "24px", borderRadius: "16px" }}
+          >
+            <h3 style={{ marginTop: 0 }}>{result.disease}</h3>
             <p>
               <strong>{t("farmer.disease.description")}:</strong> {result.description}
             </p>
@@ -71,13 +97,13 @@ function FarmerDisease() {
             <p>
               <strong>{t("farmer.disease.confidence")}:</strong> {result.confidence}%
             </p>
-            <a href={result.buy_link} target="_blank" rel="noreferrer">
-              {t("farmer.disease.buyLink")}
+            <a href={result.buy_link} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: "12px", fontWeight: "700", color: "#15803d" }}>
+              {t("farmer.disease.buyLink")} →
             </a>
-          </div>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
