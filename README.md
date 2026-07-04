@@ -211,42 +211,6 @@ AgriEase/
 
 ---
 
-# 📷 Application Screenshots
-
-## Landing Page
-
-<img src="C:/Users/Roshan/OneDrive/Pictures/Screenshots/Screenshot 2026-07-04 145717.png"/>
-
-### Login
-
-<img src="screenshots/login.png"/>
-
----
-
-### Dashboard
-
-<img src="screenshots/dashboard.png"/>
-
----
-
-### Marketplace
-
-<img src="screenshots/marketplace.png"/>
-
----
-
-### Disease Detection
-
-<img src="screenshots/disease.png"/>
-
----
-
-### Equipment Rental
-
-<img src="screenshots/equipment.png"/>
-
----
-
 # 🚀 Installation
 
 ## Clone Repository
