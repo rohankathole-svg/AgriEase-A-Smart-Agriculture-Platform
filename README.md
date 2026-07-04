@@ -445,7 +445,7 @@ GitHub: https://github.com/rohankathole-svg
 
 LinkedIn: https://www.linkedin.com/in/rohan-kathole
 
-Email: rohankathole07@gmail.com
+Email: rohankathole.er@gmail.com
 
 ---
 
