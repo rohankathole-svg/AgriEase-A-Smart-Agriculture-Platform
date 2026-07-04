@@ -248,18 +248,10 @@ AgriEase/
 
 ---
 
-## 🏠 Home Page
-
-<p align="center">
-<img src="screenshots/home.png" width="900">
-</p>
-
----
-
 ## 📊 Farmer Dashboard
 
 <p align="center">
-<img src="screenshots/dashboard.png" width="900">
+<img src="screenshots\Dashboard.png" width="900">
 </p>
 
 ---
@@ -275,7 +267,7 @@ AgriEase/
 ## 🚜 Equipment Rental
 
 <p align="center">
-<img src="screenshots/equipment.png" width="900">
+<img src="screenshots\equpment rental.png" width="900">
 </p>
 
 ---
@@ -283,7 +275,7 @@ AgriEase/
 ## 🤖 AI Disease Detection
 
 <p align="center">
-<img src="screenshots/disease-detection.png" width="900">
+<img src="screenshots\diseasedetection.png" width="900">
 </p>
 
 ---
@@ -299,7 +291,7 @@ AgriEase/
 ## 👤 User Profile
 
 <p align="center">
-<img src="screenshots/profile.png" width="900">
+<img src="screenshots\userprofile.png" width="900">
 </p>
 
 ---
